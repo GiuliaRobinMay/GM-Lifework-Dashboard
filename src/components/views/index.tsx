@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Domain, Tab } from '@/lib/nav';
 import type { Bundle } from '@/lib/data/bundle';
-import { activeClients, pipelineClients, archivedClients, appsForDomain } from '@/lib/data';
+import { appsForDomain } from '@/lib/data';
+import { byStatus, appsFor } from '@/lib/crm';
 import { Zone, WorkWidget, AppsWidget, NotWired } from '@/components/views/shared';
 
 import { clientsZone } from '@/components/views/clients';
@@ -42,14 +43,16 @@ export function zoneCounts(domain: Domain, b: Bundle): Record<string, number> {
     // Client counts only appear once the live Notion read has returned; an
     // unconnected zone shows no numbers rather than zeros, which would read
     // as "you have no clients".
+    // Counts only once the CRM is connected; zeros would read as "you have no
+    // clients", which is a different and wrong statement.
     case 'clients':
-      return b.clientsConnected
+      return b.crmConnected
         ? {
-          active: activeClients(b.clients).length,
-          pipeline: pipelineClients(b.clients).length,
-          communities: b.clients.filter((c) => c.mcpServer).length,
-          delivery: b.clientTasks.length,
-          archive: archivedClients(b.clients).length,
+          active: byStatus(b.companies, 'active').length,
+          pipeline: byStatus(b.companies, 'contact').length,
+          communities: b.companies.filter((c) => c.communityUrl).length,
+          delivery: b.clientTasks.length + b.clientApps.length,
+          archive: b.companies.filter((c) => ['done', 'sleeping', 'archived'].includes(c.status)).length,
         }
         : {};
     case 'content':

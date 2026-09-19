@@ -9,3 +9,8 @@ build/
 next-env.d.ts
 .DS_Store
 .vercel
+
+# Real client rows. These live in Supabase and on her machine, never in git.
+/data/
+*.local.json
+import-clients*.sql

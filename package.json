@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed:gen": "node --experimental-strip-types --no-warnings scripts/gen-seed.mjs"
+    "seed:gen": "node --experimental-strip-types --no-warnings scripts/gen-seed.mjs",
+    "clients:push": "node --no-warnings scripts/notion-push.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

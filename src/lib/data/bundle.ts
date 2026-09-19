@@ -1,12 +1,14 @@
 import {
   getTasks, getApps, getBrainSources, getVoiceRules,
   getContent, getCourses, getGoals, getSignals,
+  getCompanies, getContacts, getClientApps,
 } from '@/lib/data';
-import { readClients, readClientTasks } from '@/lib/notion';
+import { readClientTasks } from '@/lib/notion';
 import type {
-  Client, Task, AppLink, BrainSource, VoiceRule,
+  Task, AppLink, BrainSource, VoiceRule,
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
+import type { Company, Contact, ClientApp } from '@/lib/crm';
 
 /**
  * Every domain page reads the same bundle.
@@ -14,9 +16,9 @@ import type {
  * One round trip's worth of reads, in parallel, which keeps the view
  * functions pure: they receive data, they return JSX, they never fetch.
  *
- * Note the asymmetry, and keep it. Everything reachable from `getX()` may be
- * persisted in Supabase. `clients` and `clientTasks` come from Notion at
- * request time and are held only for the length of this render.
+ * The CRM (companies, contacts, apps) lives in Supabase and is read like
+ * everything else. `clientTasks` is the exception: open client work still
+ * lives in Notion's Daily Tasks, so it is read per request and not stored.
  */
 export type Bundle = {
   tasks: Task[];
@@ -30,21 +32,26 @@ export type Bundle = {
   source: 'supabase' | 'seed';
   error: string | null;
 
-  /** Live from Notion. Never stored, never cached, never committed. */
-  clients: Client[];
+  /** The CRM, from Supabase. */
+  companies: Company[];
+  contacts: Contact[];
+  clientApps: ClientApp[];
+  /** False when Supabase is not configured, so the zone can say so. */
+  crmConnected: boolean;
+
+  /** Open client work, read live from Notion's Daily Tasks. Not stored. */
   clientTasks: Task[];
-  clientsConnected: boolean;
 };
 
 export async function loadAll(): Promise<Bundle> {
   const [
     tasks, apps, brainSources, voiceRules,
     content, courses, goals, signals,
-    clients, clientTasks,
+    companies, contacts, clientApps, clientTasks,
   ] = await Promise.all([
     getTasks(), getApps(), getBrainSources(), getVoiceRules(),
     getContent(), getCourses(), getGoals(), getSignals(),
-    readClients(), readClientTasks(),
+    getCompanies(), getContacts(), getClientApps(), readClientTasks(),
   ]);
 
   // If any read fell back, say so once rather than ten times.
@@ -63,8 +70,12 @@ export async function loadAll(): Promise<Bundle> {
     source: tasks.source,
     error: failed?.error ?? null,
 
-    clients: clients.rows,
+    companies: companies.rows,
+    contacts: contacts.rows,
+    clientApps: clientApps.rows,
+    // Connected means there is real data behind the zone — from Supabase, or
+    // from the local fixture while the database is still being set up.
+    crmConnected: companies.source === 'supabase' || companies.rows.length > 0,
     clientTasks: clientTasks.rows,
-    clientsConnected: clients.connected,
   };
 }

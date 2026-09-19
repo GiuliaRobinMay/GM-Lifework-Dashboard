@@ -95,7 +95,9 @@ function voiceView(domain: Domain, tab: Tab, b: Bundle): ReactNode {
 // -------------------------------------------------------------------- method
 
 function methodView(domain: Domain, tab: Tab, b: Bundle): ReactNode {
-  const active = b.clients.filter((c) => c.status === 'active' && c.rootsPhase);
+  // ROOTS phase is judgement about the engagement, not a CRM field — the
+  // client rows carry a construction phase instead, which is different.
+  const active: { id: string; name: string; rootsPhase: string | null }[] = [];
 
   return (
     <Zone domain={domain} tab={tab} b={b}>
@@ -126,7 +128,7 @@ function methodView(domain: Domain, tab: Tab, b: Bundle): ReactNode {
                     <hr className="divider" />
                     <Rows>
                       {here.map((c) => (
-                        <Row key={c.id} title={c.community} sub={c.contact ?? undefined} href="/d/clients/active" />
+                        <Row key={c.id} title={c.name} href="/d/clients/active" />
                       ))}
                     </Rows>
                   </>

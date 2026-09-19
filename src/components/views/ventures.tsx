@@ -5,7 +5,8 @@ import { ROOTS } from '@/lib/types';
 import { accentAt } from '@/lib/nav';
 import { Widget, Stat, Row, Rows, Empty, Badge, Progress } from '@/components/ui';
 import { Zone, AppsWidget, WorkWidget, NotWired } from '@/components/views/shared';
-import { activeClients, pipelineClients, shortDate } from '@/lib/data';
+import { shortDate } from '@/lib/data';
+import { byStatus, contactsFor, fullName, platformOf, PHASE_LABEL } from '@/lib/crm';
 
 /**
  * The three ventures.
@@ -23,8 +24,10 @@ export function ventureZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
 // ---------------------------------------------------------------------- BTB
 
 function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
-  const active = activeClients(b.clients).filter((c) => c.venture === 'btb' && c.id !== 'big-tribe-builders');
-  const pipeline = pipelineClients(b.clients);
+  // Her own row sits in the client list so it can carry tasks; it is not an
+  // engagement, so it is excluded here.
+  const active = byStatus(b.companies, 'active').filter((c) => c.id !== 'big-tribe-builders');
+  const pipeline = byStatus(b.companies, 'contact');
 
   if (tab.slug === 'pulse') {
     return (
@@ -41,8 +44,8 @@ function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
         <section className="grid">
           <div className="col-3"><Stat label="Engagements" value={active.length} meta="Live advisory work" accent="violet" href="/d/clients/active" /></div>
           <div className="col-3"><Stat label="Pipeline" value={pipeline.length} meta="Conversations open" accent="red" href="/d/clients/pipeline" /></div>
-          <div className="col-3"><Stat label="Wired communities" value={b.clients.filter((c) => c.mcpServer).length} meta="Readable from here" accent="green" href="/d/clients/communities" /></div>
-          <div className="col-3"><Stat label="Open work" value={b.tasks.filter((t) => t.status !== 'done' && t.clientId).length} meta="Across all clients" accent="orange" /></div>
+          <div className="col-3"><Stat label="Communities" value={b.companies.filter((c) => c.communityUrl).length} meta="Platforms you touch" accent="green" href="/d/clients/communities" /></div>
+          <div className="col-3"><Stat label="Open client work" value={b.clientTasks.length} meta="From Daily Tasks" accent="orange" /></div>
         </section>
 
         <section className="grid">
@@ -54,10 +57,9 @@ function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
                     key={c.id}
                     accent={accentAt(i)}
                     icon="users"
-                    title={c.community}
-                    sub={[c.contact, ROOTS.find((r) => r.key === c.rootsPhase)?.name].filter(Boolean).join(' · ')}
-                    href="/d/clients/active"
-                    aside={c.openTasks > 0 ? <Badge tone="orange">{c.openTasks}</Badge> : undefined}
+                    title={c.name}
+                    sub={[contactsFor(b.contacts, c.id).map(fullName)[0], platformOf(c)].filter(Boolean).join(' · ')}
+                    href={`/d/clients/active/${c.id}`}
                   />
                 ))}
               </Rows>
@@ -70,25 +72,73 @@ function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
   }
 
   if (tab.slug === 'roots') {
+    // Two different things, deliberately kept apart. ROOTS is the method you
+    // sell. `construction phase` is what each engagement is actually in, and
+    // it comes from the client row. Mapping one onto the other would be my
+    // guess presented as your framework, so both are shown as they are.
+    const phases = new Map<string, typeof active>();
+    for (const c of active) {
+      if (!c.phase) continue;
+      phases.set(c.phase, [...(phases.get(c.phase) ?? []), c]);
+    }
+    const unphased = active.filter((c) => !c.phase);
+
     return (
       <Zone domain={domain} tab={tab} b={b}>
+        <section className="card accent-violet" style={{ padding: 20 }}>
+          <p className="eyebrow">The method</p>
+          <p className="section-title" style={{ marginTop: 8 }}>ROOTS — the five pillars</p>
+          <p className="muted" style={{ marginTop: 6, maxWidth: 640 }}>
+            You make the plan, the client or their tech team implements. Elite advisory, not
+            delivery.
+          </p>
+        </section>
+
         <section className="grid">
-          {ROOTS.map((r, i) => {
-            const here = active.filter((c) => c.rootsPhase === r.key);
-            return (
-              <div className="col-4" key={r.key}>
-                <Widget title={`${r.letter} — ${r.name}`} accent={accentAt(i)} flush action={here.length ? <span className="badge">{here.length}</span> : undefined}>
-                  <div className="widget__body"><p className="muted">{r.blurb}</p></div>
-                  {here.length > 0 ? (
-                    <>
-                      <hr className="divider" />
-                      <Rows>{here.map((c) => <Row key={c.id} title={c.community} sub={c.contact ?? undefined} href="/d/clients/active" />)}</Rows>
-                    </>
-                  ) : null}
+          {ROOTS.map((r, i) => (
+            <div className="col-4" key={r.key}>
+              <Widget title={`${r.letter} — ${r.name}`} accent={accentAt(i)}>
+                <p className="muted">{r.blurb}</p>
+              </Widget>
+            </div>
+          ))}
+        </section>
+
+        <section>
+          <div className="hstack" style={{ marginBottom: 12 }}>
+            <h2 className="section-title">Where the live engagements actually are</h2>
+            <div className="spacer" />
+            <span className="muted">construction phase, from the client record</span>
+          </div>
+          <div className="grid">
+            {[...phases.entries()].map(([phase, rows], i) => (
+              <div className="col-4" key={phase}>
+                <Widget
+                  title={PHASE_LABEL[phase as keyof typeof PHASE_LABEL] ?? phase}
+                  accent={accentAt(i)}
+                  flush
+                  action={<span className="badge">{rows.length}</span>}
+                >
+                  <Rows>
+                    {rows.map((c, j) => (
+                      <Row key={c.id} accent={accentAt(j)} title={c.name} href={`/d/clients/active/${c.id}`} />
+                    ))}
+                  </Rows>
                 </Widget>
               </div>
-            );
-          })}
+            ))}
+            {unphased.length > 0 ? (
+              <div className="col-4">
+                <Widget title="No phase set" accent={accentAt(phases.size)} flush action={<span className="badge">{unphased.length}</span>}>
+                  <Rows>
+                    {unphased.map((c, j) => (
+                      <Row key={c.id} accent={accentAt(j)} title={c.name} href={`/d/clients/active/${c.id}`} />
+                    ))}
+                  </Rows>
+                </Widget>
+              </div>
+            ) : null}
+          </div>
         </section>
       </Zone>
     );
@@ -106,11 +156,9 @@ function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
                     key={c.id}
                     accent={accentAt(i)}
                     icon="users"
-                    title={c.community}
-                    sub={[c.contact, c.notes, c.lastTouch ? `last touch ${shortDate(c.lastTouch)}` : null].filter(Boolean).join(' · ')}
-                    href={c.notionUrl}
-                    external
-                    aside={<Badge>{ROOTS.find((r) => r.key === c.rootsPhase)?.letter ?? '—'}</Badge>}
+                    title={c.name}
+                    sub={[contactsFor(b.contacts, c.id).map(fullName).join(', '), c.notes].filter(Boolean).join(' · ')}
+                    href={`/d/clients/active/${c.id}`}
                   />
                 ))}
               </Rows>
@@ -133,7 +181,7 @@ function btbZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
             <Widget title="Open conversations" accent="red" flush action={<span className="badge">{pipeline.length}</span>}>
               <Rows>
                 {pipeline.slice(0, 12).map((c, i) => (
-                  <Row key={c.id} accent={accentAt(i)} title={c.community} sub={c.contact ?? '—'} href={c.notionUrl} external />
+                  <Row key={c.id} accent={accentAt(i)} title={c.name} sub={contactsFor(b.contacts, c.id).map(fullName).join(', ') || '—'} href={`/d/clients/pipeline/${c.id}`} />
                 ))}
               </Rows>
               <div className="widget__foot">

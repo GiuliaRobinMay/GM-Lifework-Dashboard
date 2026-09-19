@@ -15,6 +15,8 @@ import type {
   Client, Task, AppLink, BrainSource, VoiceRule,
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
+import type { Company, Contact, ClientApp } from '@/lib/crm';
+import { localRows } from '@/lib/data/local';
 
 import { APPS } from '@/lib/seed/apps';
 import { BRAIN_SOURCES, VOICE_RULES } from '@/lib/seed/brain';
@@ -30,6 +32,21 @@ export const getContent = () => readTable<ContentItem>('content_items_api', CONT
 export const getCourses = () => readTable<Course>('courses_api', COURSES);
 export const getGoals = () => readTable<GoalPeriod>('goal_periods_api', GOALS);
 export const getSignals = () => readTable<Signal>('signals_api', SIGNALS);
+
+// The CRM. Supabase is where these are worked; Notion keeps the copy, pushed
+// from here by scripts/notion-push.mjs. There is no seed: an empty client list
+// is the honest answer before the import has been run.
+//
+// Falls back to data/clients.local.json when Supabase is not configured, so
+// the CRM can be run and judged before the database exists. That file is
+// gitignored: real client rows belong on her machine and in Supabase, not in
+// the repository.
+export const getCompanies = () =>
+  readTable<Company>('client_companies_api', localRows<Company>('companies') ?? []);
+export const getContacts = () =>
+  readTable<Contact>('client_contacts_api', localRows<Contact>('contacts') ?? []);
+export const getClientApps = () =>
+  readTable<ClientApp>('client_apps_api', localRows<ClientApp>('clientApps') ?? []);
 
 // ---------------------------------------------------------------- selectors
 
