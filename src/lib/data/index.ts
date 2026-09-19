@@ -1,0 +1,104 @@
+/**
+ * The read layer.
+ *
+ * Reads go through the `*_api` views rather than the tables. The views rename
+ * columns to the camelCase the TypeScript types already use, so no row ever
+ * needs mapping in application code, and they carry `security_invoker` so the
+ * RLS policies on the underlying tables still apply.
+ *
+ * Every page reads through here, never from the seed or from Supabase
+ * directly. One place to change when a source goes live, and the UI never
+ * learns where a row came from.
+ */
+import { readTable, isSupabaseConfigured } from '@/lib/supabase';
+import type {
+  Client, Task, AppLink, BrainSource, VoiceRule,
+  ContentItem, Course, GoalPeriod, Signal,
+} from '@/lib/types';
+
+import { APPS } from '@/lib/seed/apps';
+import { BRAIN_SOURCES, VOICE_RULES } from '@/lib/seed/brain';
+import { TASKS, CONTENT, COURSES, GOALS, SIGNALS } from '@/lib/seed/work';
+
+export { isSupabaseConfigured };
+
+export const getTasks = () => readTable<Task>('tasks_api', TASKS);
+export const getApps = () => readTable<AppLink>('app_links_api', APPS);
+export const getBrainSources = () => readTable<BrainSource>('brain_sources_api', BRAIN_SOURCES);
+export const getVoiceRules = () => readTable<VoiceRule>('voice_rules_api', VOICE_RULES);
+export const getContent = () => readTable<ContentItem>('content_items_api', CONTENT);
+export const getCourses = () => readTable<Course>('courses_api', COURSES);
+export const getGoals = () => readTable<GoalPeriod>('goal_periods_api', GOALS);
+export const getSignals = () => readTable<Signal>('signals_api', SIGNALS);
+
+// ---------------------------------------------------------------- selectors
+
+// Client selectors operate on rows read live from Notion (src/lib/notion.ts).
+// There is no getClients(): client data is never persisted, so there is
+// nothing here to read it from.
+export const activeClients = (rows: Client[]) => rows.filter((c) => c.status === 'active');
+export const pipelineClients = (rows: Client[]) => rows.filter((c) => c.status === 'contact');
+export const archivedClients = (rows: Client[]) =>
+  rows.filter((c) => c.status === 'done' || c.status === 'sleeping' || c.status === 'archived');
+
+export const openTasks = (rows: Task[]) => rows.filter((t) => t.status !== 'done');
+
+export const tasksForDomain = (rows: Task[], domain: string) =>
+  openTasks(rows).filter((t) => t.domain === domain);
+
+export const tasksForClient = (rows: Task[], clientId: string) =>
+  openTasks(rows).filter((t) => t.clientId === clientId);
+
+export const appsForDomain = (rows: AppLink[], domain: string) =>
+  rows.filter((a) => a.domains.includes(domain));
+
+export const pinnedApps = (rows: AppLink[]) => rows.filter((a) => a.pinned);
+
+/** Anything dated on or before `today`, still open. */
+export function dueBy(rows: Task[], today: string): Task[] {
+  return openTasks(rows)
+    .filter((t) => (t.dueDate && t.dueDate <= today) || (t.doDate && t.doDate <= today))
+    .sort((a, b) => (a.dueDate ?? a.doDate ?? '').localeCompare(b.dueDate ?? b.doDate ?? ''));
+}
+
+/** Europe/Brussels — her timezone, per the task-capture rules. */
+export function today(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Brussels',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+export function greeting(): string {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Brussels', hour: 'numeric', hour12: false })
+      .format(new Date()),
+  );
+  if (hour < 6) return 'Still up';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+/** "Fri 19 Sep" — short, unambiguous, no year unless it differs. */
+export function shortDate(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Brussels',
+  }).format(d);
+}
+
+export function relativeDay(iso: string | null, base: string): string | null {
+  if (!iso) return null;
+  if (iso === base) return 'Today';
+  const a = new Date(`${iso}T12:00:00Z`).getTime();
+  const b = new Date(`${base}T12:00:00Z`).getTime();
+  const days = Math.round((a - b) / 86_400_000);
+  if (days === 1) return 'Tomorrow';
+  if (days === -1) return 'Yesterday';
+  if (days < 0) return `${Math.abs(days)}d overdue`;
+  if (days <= 7) return `in ${days}d`;
+  return null;
+}
