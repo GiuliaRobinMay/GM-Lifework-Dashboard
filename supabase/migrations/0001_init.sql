@@ -1,15 +1,13 @@
 -- ============================================================================
 -- Lifework — initial schema
 -- ----------------------------------------------------------------------------
--- NO CLIENT DATA LIVES IN THIS DATABASE.
+-- Step 1 of 3. The foundation: her own work, plus the pieces the client
+-- database needs — the pgcrypto extension and touch_updated_at(). The client
+-- tables themselves arrive in 0002_clients.sql, which will not run without
+-- this file first.
 --
--- There is deliberately no `clients` table, no `client_id` on tasks, and no
--- `deployments` table — a deployment's name, host and URL identify the client
--- it belongs to. Client information stays in Notion and is read at request
--- time by src/lib/notion.ts, rendered, and kept nowhere. `tasks` holds her own
--- work only (GN_tasks); client work (Daily Tasks) is never written here.
---
--- If a future migration adds a client column, that is a mistake, not a feature.
+-- `tasks` here holds HER OWN work (GN_tasks). Client work lives in the client
+-- tables from step 2.
 --
 -- Single-tenant by design. This is Giulia's dashboard; there is no second user,
 -- and pretending otherwise would buy complexity nothing needs. RLS is still on
