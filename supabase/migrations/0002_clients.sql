@@ -1,68 +1,85 @@
 -- ============================================================================
--- Lifework — the client database
+-- Lifework — step 2 of 3: the client database
 -- ----------------------------------------------------------------------------
 -- Supabase is where the CRM is WORKED. Notion stays as the copy, kept current
--- by a push from here (scripts/notion-push.mjs). The direction is deliberate:
+-- by a push from here (scripts/notion-push.mjs). Nothing reads Notion back, so
+-- Notion can never lose a conflict.
 --
---     Supabase  ──(push, on change)──▶  Notion
---        ▲                                 │
---        └────(import, one-off / manual)───┘
---
--- Notion is never retired. It is the durable copy and the thing that keeps
--- working on her phone when this dashboard is down.
---
--- Three tables, because one row per client could not answer the questions she
--- actually has:
+-- Three tables, because one row per client could not answer the questions
+-- being asked of it:
 --
 --   client_companies  the engagement. One per community.
---   client_contacts   the people. MANY per company — Notion cannot hold this,
---                     which is the main reason the CRM moves here at all.
---   client_apps       what has been built for them, with its repo and its URL.
+--   client_contacts   the people. MANY per company — Notion holds one
+--                     free-text name per client, so a company with two or
+--                     three contacts is a single comma-joined string there.
+--   client_apps       what has been built for them, with its repo and URL.
 --
 -- Fields Notion also has are marked `-- notion` and are pushed back. Fields
 -- without that marker exist only here, because Notion has no column for them.
+--
+-- SAFE TO RE-RUN. Every statement is guarded, so a partial run can simply be
+-- run again rather than unpicked by hand.
 -- ============================================================================
 
-create type client_status_v2 as enum ('active', 'contact', 'sleeping', 'done', 'archived');
-create type client_phase     as enum ('consultancy', 'architecture', 'branding', 'welcome',
-                                      'onboarding', 'content', 'landing_page', 'events',
-                                      'payment_plans', 'bucket');
-create type client_priority  as enum ('high', 'normal', 'low', 'later');
-create type client_source    as enum ('upwork', 'direct', 'referral', 'community', 'unknown');
-create type app_kind         as enum ('app', 'bot', 'automation', 'landing_page', 'integration', 'site');
-create type app_state        as enum ('live', 'building', 'paused', 'retired');
+-- Postgres has no `create type if not exists`, so each enum is created inside
+-- a block that swallows only the duplicate-object error.
+do $$ begin
+  create type client_status   as enum ('active', 'contact', 'sleeping', 'done', 'archived');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type client_phase    as enum ('consultancy', 'architecture', 'branding', 'welcome',
+                                       'onboarding', 'content', 'landing_page', 'events',
+                                       'payment_plans', 'bucket');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type client_priority as enum ('high', 'normal', 'low', 'later');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type client_source   as enum ('upwork', 'direct', 'referral', 'community', 'unknown');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type app_kind        as enum ('app', 'bot', 'automation', 'landing_page', 'integration', 'site');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type app_state       as enum ('live', 'building', 'paused', 'retired');
+exception when duplicate_object then null; end $$;
 
 -- ------------------------------------------------------------- companies
 
-create table client_companies (
+create table if not exists client_companies (
   id            text primary key,          -- slug, stable across renames
   name          text not null,             -- notion: community (title)
-  legal_name    text,                      -- e.g. the Ltd behind the community
-  status        client_status_v2 not null default 'contact',  -- notion: client status
+  legal_name    text,                      -- the Ltd behind the community
+  status        client_status not null default 'contact',  -- notion: client status
   phase         client_phase,              -- notion: construction phase
   priority      client_priority,           -- notion: priority
   source        client_source not null default 'unknown',
 
-  website       text,                      -- notion: website
-  community_url text,                      -- notion: mighty networks
-  community_platform text,                 -- Mighty Networks, Circle, custom domain…
-  upwork_url    text,                      -- notion: upwork
-  slack_url     text,                      -- notion: link to slack
+  website            text,                 -- notion: website
+  community_url      text,                 -- notion: mighty networks
+  community_platform text,                 -- Mighty Networks, or its own domain
+  upwork_url         text,                 -- notion: upwork
+  slack_url          text,                 -- notion: link to slack
 
   -- An MCP server that can read this community's own data, where one exists.
-  mcp_server    text,
+  mcp_server         text,
 
-  notes         text,                      -- notion: notes
-  remarks       text,                      -- notion: opmerkingen (hers, in Dutch)
+  notes   text,                            -- notion: notes
+  remarks text,                            -- notion: opmerkingen
 
-  has_automations  boolean not null default false,  -- notion: Automations
-  has_content_bot  boolean not null default false,  -- notion: Content Bot
-  has_cm           boolean not null default false,  -- notion: CM
-  in_mighty        boolean not null default false,  -- notion: in Mighty
-  in_kit           boolean not null default false,  -- notion: in Kit
+  has_automations boolean not null default false,  -- notion: Automations
+  has_content_bot boolean not null default false,  -- notion: Content Bot
+  has_cm          boolean not null default false,  -- notion: CM
+  in_mighty       boolean not null default false,  -- notion: in Mighty
+  in_kit          boolean not null default false,  -- notion: in Kit
 
   -- The link back to the Notion row this mirrors. Null means born here and
-  -- not yet pushed; the push script creates the Notion page and fills it in.
+  -- not yet pushed; the push script creates the page and fills it in.
   notion_page_id   text unique,
   notion_url       text,
   notion_synced_at timestamptz,
@@ -71,65 +88,50 @@ create table client_companies (
   updated_at timestamptz not null default now()
 );
 
-create index client_companies_status_idx   on client_companies (status);
-create index client_companies_priority_idx on client_companies (priority);
+create index if not exists client_companies_status_idx   on client_companies (status);
+create index if not exists client_companies_priority_idx on client_companies (priority);
 -- Rows changed since their last push. The push script reads exactly this.
-create index client_companies_dirty_idx    on client_companies (updated_at)
+create index if not exists client_companies_dirty_idx    on client_companies (updated_at)
   where notion_synced_at is null or updated_at > notion_synced_at;
 
-comment on table client_companies is
-  'One row per client engagement. Worked here, pushed to Notion. Notion keeps
-   the copy and is never retired.';
-
 -- -------------------------------------------------------------- contacts
---
--- The reason this project exists as three tables. Notion holds ONE free-text
--- `client` field per row, so a company with two or three contacts is a single
--- comma-joined string there, and cannot be emailed, phoned or sorted.
 
-create table client_contacts (
-  id          uuid primary key default gen_random_uuid(),
-  company_id  text not null references client_companies (id) on delete cascade,
+create table if not exists client_contacts (
+  id         uuid primary key default gen_random_uuid(),
+  company_id text not null references client_companies (id) on delete cascade,
 
-  first_name  text not null,
-  last_name   text not null default '',
-  credentials text,                        -- CPCC, PhD, LCSW — post-nominals
-  role        text,                        -- founder, community manager, ops…
+  first_name   text not null,
+  last_name    text not null default '',
+  credentials  text,                       -- CPCC, PhD, LCSW — post-nominals
+  role         text,
 
-  email       text,
-  phone       text,
+  email        text,
+  phone        text,
   linkedin_url text,
-  upwork_url  text,                        -- their own room, when it differs
+  upwork_url   text,                       -- their own room, when it differs
 
-  -- Exactly one primary per company; the push writes this one back to Notion's
-  -- single `client` field, so the Notion copy stays recognisable.
   is_primary  boolean not null default false,
-
   source      client_source not null default 'unknown',
   -- Set when the name was inferred rather than confirmed, so the UI can ask.
   needs_check boolean not null default false,
   notes       text,
 
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-create index client_contacts_company_idx on client_contacts (company_id);
-create unique index client_contacts_one_primary
+create index if not exists client_contacts_company_idx on client_contacts (company_id);
+
+-- At most one primary per company. This is the contact whose name is pushed
+-- into Notion's single `client` field.
+create unique index if not exists client_contacts_one_primary
   on client_contacts (company_id) where is_primary;
 
-comment on column client_contacts.is_primary is
-  'At most one per company, enforced by a partial unique index. This is the
-   contact whose name is pushed into Notion''s single `client` field.';
-
 -- ------------------------------------------------------------------ apps
---
--- The inventory of what has been built for a client: the app, where it runs,
--- and the repository it came from. Notion has no equivalent.
 
-create table client_apps (
-  id          uuid primary key default gen_random_uuid(),
-  company_id  text not null references client_companies (id) on delete cascade,
+create table if not exists client_apps (
+  id         uuid primary key default gen_random_uuid(),
+  company_id text not null references client_companies (id) on delete cascade,
 
   name        text not null,
   kind        app_kind  not null default 'app',
@@ -140,37 +142,42 @@ create table client_apps (
   host        text,                        -- Cloud Run, Netlify, Mighty embed…
   description text,
 
-  shipped_at  date,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  shipped_at date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-create index client_apps_company_idx on client_apps (company_id);
-create index client_apps_state_idx   on client_apps (state);
+create index if not exists client_apps_company_idx on client_apps (company_id);
+create index if not exists client_apps_state_idx   on client_apps (state);
 
 -- ------------------------------------------------------------ updated_at
 
-create trigger client_companies_touch before update on client_companies
+create or replace trigger client_companies_touch before update on client_companies
   for each row execute function touch_updated_at();
-create trigger client_contacts_touch  before update on client_contacts
+create or replace trigger client_contacts_touch before update on client_contacts
   for each row execute function touch_updated_at();
-create trigger client_apps_touch      before update on client_apps
+create or replace trigger client_apps_touch before update on client_apps
   for each row execute function touch_updated_at();
 
 -- ------------------------------------------------------------------- RLS
---
--- Read to the anon key (the browser). Writes go through the service role from
--- a server context, so a stray page script can never edit a client.
 
 alter table client_companies enable row level security;
 alter table client_contacts  enable row level security;
 alter table client_apps      enable row level security;
+
+drop policy if exists "anon reads client_companies" on client_companies;
+drop policy if exists "anon reads client_contacts"  on client_contacts;
+drop policy if exists "anon reads client_apps"      on client_apps;
 
 create policy "anon reads client_companies" on client_companies for select using (true);
 create policy "anon reads client_contacts"  on client_contacts  for select using (true);
 create policy "anon reads client_apps"      on client_apps      for select using (true);
 
 -- ------------------------------------------------------------------ views
+
+drop view if exists client_companies_api;
+drop view if exists client_contacts_api;
+drop view if exists client_apps_api;
 
 create view client_companies_api with (security_invoker = true) as
   select
