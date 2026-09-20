@@ -17,6 +17,10 @@ export function Tabs({
   active: string;
   counts?: Record<string, number>;
 }) {
+  // A strip with a single tab tells you nothing you cannot already see in the
+  // rail, so it is not drawn at all.
+  if (domain.tabs.length <= 1) return null;
+
   return (
     <nav className="tabs" aria-label={`${domain.label} sections`}>
       {domain.tabs.map((t) => {

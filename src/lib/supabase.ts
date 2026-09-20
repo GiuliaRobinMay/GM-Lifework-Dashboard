@@ -15,6 +15,19 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
+/**
+ * Which of the two public variables the build could not see.
+ *
+ * Next inlines NEXT_PUBLIC_* at build time, so "set it in Vercel" and "the
+ * build saw it" are different facts. When they disagree the cause is almost
+ * always a name that differs by one character, and guessing from a screenshot
+ * does not settle it — so the page prints the names it actually looked for.
+ */
+export const missingSupabaseEnv: string[] = [
+  url ? null : 'NEXT_PUBLIC_SUPABASE_URL',
+  anonKey ? null : 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+].filter((x): x is string => x !== null);
+
 let cached: SupabaseClient | null = null;
 
 /** Returns null when Supabase is not configured, so callers fall back to seed. */

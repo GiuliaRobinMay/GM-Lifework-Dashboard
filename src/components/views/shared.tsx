@@ -24,7 +24,7 @@ export function Zone({
   return (
     <main className="content content--wide stack">
       <PageHead title={domain.label} blurb={tab.blurb} actions={actions} />
-      <SourceNote source={b.source} error={b.error} />
+      <SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />
       {children}
     </main>
   );

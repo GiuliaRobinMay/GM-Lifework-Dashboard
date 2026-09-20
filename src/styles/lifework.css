@@ -554,3 +554,52 @@ button.row {
   .tabs { padding: 0 16px; }
   .searchbtn { width: auto; flex: 1; min-width: 0; }
 }
+
+/* --------------------------------------------------------------------------
+   Client list — name, who she talks to, status, and the two ways out.
+   The row is a grid rather than a link, because the community and Upwork
+   links are anchors of their own and an anchor cannot sit inside a link.
+   -------------------------------------------------------------------------- */
+
+.clientline {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 110px auto;
+  gap: 12px;
+  align-items: center;
+}
+.clientline:hover { background: var(--grey-50); }
+
+.clientline__name { min-width: 0; }
+.clientline__link { text-decoration: none; color: inherit; }
+.clientline__link:hover { text-decoration: underline; }
+
+.clientline__who,
+.clientline__status { min-width: 0; font-size: 13px; }
+.clientline__who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.clientline__go { display: flex; gap: 6px; justify-content: flex-end; flex: none; }
+
+.golink {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 150ms, color 150ms;
+}
+.golink:hover { border-color: var(--ink); color: var(--ink); }
+
+@media (max-width: 820px) {
+  .clientline {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 6px;
+  }
+  .clientline__who { grid-column: 1; }
+  .clientline__status { grid-column: 2; text-align: right; }
+  .clientline__go { grid-column: 1 / -1; justify-content: flex-start; }
+}

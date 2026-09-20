@@ -3,6 +3,7 @@ import {
   getContent, getCourses, getGoals, getSignals,
   getCompanies, getContacts, getClientApps,
 } from '@/lib/data';
+import { missingSupabaseEnv } from '@/lib/supabase';
 import { readClientTasks } from '@/lib/notion';
 import type {
   Task, AppLink, BrainSource, VoiceRule,
@@ -38,6 +39,8 @@ export type Bundle = {
   clientApps: ClientApp[];
   /** False when Supabase is not configured, so the zone can say so. */
   crmConnected: boolean;
+  /** Public env vars this build could not see. Empty when both are present. */
+  missingEnv: string[];
 
   /** Open client work, read live from Notion's Daily Tasks. Not stored. */
   clientTasks: Task[];
@@ -77,5 +80,6 @@ export async function loadAll(): Promise<Bundle> {
     // from the local fixture while the database is still being set up.
     crmConnected: companies.source === 'supabase' || companies.rows.length > 0,
     clientTasks: clientTasks.rows,
+    missingEnv: missingSupabaseEnv,
   };
 }

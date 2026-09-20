@@ -102,13 +102,11 @@ export const DOMAINS: Domain[] = [
     group: 'Work',
     icon: 'users',
     accent: 'orange',
-    blurb: 'Every community you touch, from first call to live engagement.',
+    blurb: 'Every client, past and present.',
+    // One list, no sub-zones. Status is a column here, not a tab — splitting
+    // the clients across five tabs hid the ones she was looking for.
     tabs: [
-      { slug: 'active', label: 'Active', blurb: 'Live engagements. The ones you owe work to today.' },
-      { slug: 'pipeline', label: 'Pipeline', blurb: 'Contacts and conversations that have not closed yet.' },
-      { slug: 'communities', label: 'Communities', blurb: 'The platforms themselves, and which are wired to this dashboard.' },
-      { slug: 'delivery', label: 'Delivery', blurb: 'Open work per client, pulled from Daily Tasks.' },
-      { slug: 'archive', label: 'Archive', blurb: 'Finished and sleeping engagements, kept for reference.' },
+      { slug: 'all', label: 'All clients', blurb: 'Every client, past and present.' },
     ],
   },
   {

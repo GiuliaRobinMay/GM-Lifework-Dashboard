@@ -82,10 +82,21 @@ export type ClientApp = {
 
 export const STATUS_LABEL: Record<ClientStatus, string> = {
   active: 'Active',
-  contact: 'Contact',
-  sleeping: 'Sleeping',
-  done: 'Done',
+  contact: 'To contact',
+  sleeping: 'Paused',
+  done: 'Completed',
   archived: 'Archived',
+};
+
+/** Live work first, history last — the order the list is read in. */
+export const STATUS_ORDER: ClientStatus[] = ['active', 'contact', 'sleeping', 'done', 'archived'];
+
+export const STATUS_TONE: Record<ClientStatus, 'violet' | 'red' | 'green' | 'orange' | undefined> = {
+  active: 'green',
+  contact: 'orange',
+  sleeping: undefined,
+  done: undefined,
+  archived: undefined,
 };
 
 export const PHASE_LABEL: Record<ClientPhase, string> = {
@@ -150,4 +161,12 @@ export function platformOf(c: Company): string | null {
   } catch {
     return null;
   }
+}
+
+/** Mighty Networks (or whatever platform hosts them) and the Upwork room. */
+export function goLinks(c: Company): { label: string; url: string }[] {
+  const out: { label: string; url: string }[] = [];
+  if (c.communityUrl) out.push({ label: platformOf(c) ?? 'Community', url: c.communityUrl });
+  if (c.upworkUrl) out.push({ label: 'Upwork', url: c.upworkUrl });
+  return out;
 }

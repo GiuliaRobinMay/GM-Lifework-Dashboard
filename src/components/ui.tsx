@@ -159,7 +159,13 @@ export function Launcher({
 }
 
 /** Says where the rows on screen came from. Honest by default. */
-export function SourceNote({ source, error }: { source: 'supabase' | 'seed'; error?: string | null }) {
+export function SourceNote({
+  source, error, missingEnv = [],
+}: {
+  source: 'supabase' | 'seed';
+  error?: string | null;
+  missingEnv?: string[];
+}) {
   if (source === 'supabase' && !error) return null;
   return (
     <div className="notice">
@@ -175,7 +181,9 @@ export function SourceNote({ source, error }: { source: 'supabase' | 'seed'; err
         <p className="muted" style={{ marginTop: 2 }}>
           {error
             ? error
-            : 'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to switch onto your live database. The shapes are identical, so nothing in the UI changes.'}
+            : missingEnv.length > 0
+              ? `This build could not see ${missingEnv.join(' or ')}. Check the name in Vercel matches character for character, then redeploy.`
+              : 'The database is configured but returned no rows.'}
         </p>
       </div>
     </div>

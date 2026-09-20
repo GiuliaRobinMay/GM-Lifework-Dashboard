@@ -22,6 +22,10 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
     title = 'Settings';
   }
 
+  // Clients is a working surface for one thing. The day-to-day app chips
+  // belong in the zones they serve, not over a client list. Search stays.
+  const showPins = !pathname.startsWith('/d/clients');
+
   return (
     <header className="topbar">
       <div className="topbar__crumbs">
@@ -30,6 +34,7 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
 
       <div className="topbar__spacer" />
 
+      {showPins ? (
       <div className="pinrail" aria-label="Pinned apps">
         {pins.map((p, i) => (
           <a
@@ -44,6 +49,7 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
           </a>
         ))}
       </div>
+      ) : null}
 
       <button type="button" className="searchbtn" data-open-palette>
         <SearchIcon />

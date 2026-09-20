@@ -46,15 +46,9 @@ export function zoneCounts(domain: Domain, b: Bundle): Record<string, number> {
     // Counts only once the CRM is connected; zeros would read as "you have no
     // clients", which is a different and wrong statement.
     case 'clients':
-      return b.crmConnected
-        ? {
-          active: byStatus(b.companies, 'active').length,
-          pipeline: byStatus(b.companies, 'contact').length,
-          communities: b.companies.filter((c) => c.communityUrl).length,
-          delivery: b.clientTasks.length + b.clientApps.length,
-          archive: b.companies.filter((c) => ['done', 'sleeping', 'archived'].includes(c.status)).length,
-        }
-        : {};
+      // One tab, and the strip is not drawn for it. The status counts live on
+      // the page itself, where they can be read against the list.
+      return {};
     case 'content':
       return {
         today: b.content.filter((c) => c.state === 'review' || c.state === 'scheduled').length,

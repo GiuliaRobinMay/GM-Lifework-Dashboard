@@ -10,7 +10,7 @@
  * directly. One place to change when a source goes live, and the UI never
  * learns where a row came from.
  */
-import { readTable, isSupabaseConfigured } from '@/lib/supabase';
+import { readTable, isSupabaseConfigured, missingSupabaseEnv } from '@/lib/supabase';
 import type {
   Client, Task, AppLink, BrainSource, VoiceRule,
   ContentItem, Course, GoalPeriod, Signal,
@@ -22,7 +22,7 @@ import { APPS } from '@/lib/seed/apps';
 import { BRAIN_SOURCES, VOICE_RULES } from '@/lib/seed/brain';
 import { TASKS, CONTENT, COURSES, GOALS, SIGNALS } from '@/lib/seed/work';
 
-export { isSupabaseConfigured };
+export { isSupabaseConfigured, missingSupabaseEnv };
 
 export const getTasks = () => readTable<Task>('tasks_api', TASKS);
 export const getApps = () => readTable<AppLink>('app_links_api', APPS);
