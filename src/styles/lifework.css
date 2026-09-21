@@ -886,22 +886,14 @@ button.row {
 .band__tabs .btn { margin-bottom: 3px; }
 
 /* --------------------------------------------------------------------------
-   Sidebar — blackboard dark, white type. The coloured icon chips stay.
+   Sidebar brand block — blackboard dark, white type. The navigation below it
+   stays light.
    -------------------------------------------------------------------------- */
 
-.sidebar {
+.sidebar__brand {
   background: #1b1d23;
-  border-right-color: #2a2d35;
+  border-bottom-color: #1b1d23;
   color: #fff;
 }
-.sidebar__brand { border-bottom-color: #2a2d35; }
-.sidebar__foot { border-top-color: #2a2d35; }
 .sidebar__wordmark { color: #fff; }
-.sidebar__brand .muted,
-.sidebar__brand .sidebar__sub { color: rgba(255, 255, 255, .6); }
-.sidebar__group > .eyebrow { color: rgba(255, 255, 255, .45); }
-.sidebar__item { color: rgba(255, 255, 255, .78); }
-.sidebar__item:hover { background: rgba(255, 255, 255, .07); color: #fff; }
-.sidebar__item--active { background: rgba(255, 255, 255, .12); color: #fff; }
-.sidebar__count { color: rgba(255, 255, 255, .45); }
-.sidebar__item--active .sidebar__count { color: #fff; }
+.sidebar__brand .muted { color: rgba(255, 255, 255, .62); }
