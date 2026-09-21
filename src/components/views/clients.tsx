@@ -6,7 +6,7 @@ import type { Company } from '@/lib/crm';
 import {
   STATUS_LABEL, PHASE_LABEL, fullName, contactsFor, appsFor, companyLinks, platformOf,
 } from '@/lib/crm';
-import { Widget, Rows, Row, Empty, Badge } from '@/components/ui';
+import { Widget, Rows, Row, Empty, Badge, SourceNote } from '@/components/ui';
 import { Zone } from '@/components/views/shared';
 import { ClientTable } from '@/components/ClientTable';
 
@@ -24,9 +24,11 @@ export function clientsZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactN
 
 // ------------------------------------------------------------------- list
 
-function listView(domain: Domain, tab: Tab, b: Bundle, q: string): ReactNode {
+// The top bar already says "Clients", so the page draws no heading of its own.
+function listView(_domain: Domain, _tab: Tab, b: Bundle, q: string): ReactNode {
   return (
-    <Zone domain={domain} tab={tab} b={b}>
+    <main className="content content--wide stack">
+      <SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />
       {b.companies.length === 0 ? (
         <Empty>No clients in the database yet.</Empty>
       ) : (
@@ -34,7 +36,7 @@ function listView(domain: Domain, tab: Tab, b: Bundle, q: string): ReactNode {
           <ClientTable companies={b.companies} contacts={b.contacts} q={q} />
         </section>
       )}
-    </Zone>
+    </main>
   );
 }
 

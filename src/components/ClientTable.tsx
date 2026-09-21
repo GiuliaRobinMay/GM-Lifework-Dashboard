@@ -13,11 +13,20 @@ import { setStatus, archiveClient, deleteClient } from '@/app/d/clients/actions'
  * The client table.
  *
  * Grouped by status in Notion's order, each group a fold with its count.
- * DONE and ARCHIVE start folded. Every cell is ruled.
+ * DONE and ARCHIVE start folded. Every cell is ruled with a single hairline.
  *
- * Writes from here: the status select moves a row; the two icons at the end
- * archive it or delete it (delete asks first).
+ * Columns can be dragged wider or narrower at the header edge; the widths
+ * are kept in this browser so the table opens the way it was left.
+ *
+ * Writes from here: the status select moves a row; archive and delete are
+ * the last two columns (delete asks first).
  */
+
+const COLS = ['Community', 'Client', 'Status', 'Mighty Networks', 'Upwork', '', ''] as const;
+const DEFAULT_WIDTHS = [260, 210, 170, 175, 130, 60, 60];
+const MIN_WIDTH = 56;
+const STORE = 'lifework.clients.cols';
+
 export function ClientTable({
   companies, contacts, q = '',
 }: {
@@ -26,6 +35,23 @@ export function ClientTable({
   q?: string;
 }) {
   const [open, setOpen] = useState<Record<ClientStatus, boolean>>({ ...STATUS_OPEN_BY_DEFAULT });
+  const [widths, setWidths] = useState<number[]>(DEFAULT_WIDTHS);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE) ?? 'null');
+      if (Array.isArray(saved) && saved.length === COLS.length) setWidths(saved);
+    } catch { /* a bad value falls back to the defaults */ }
+  }, []);
+
+  function resize(i: number, w: number) {
+    setWidths((prev) => {
+      const next = [...prev];
+      next[i] = Math.max(MIN_WIDTH, Math.round(w));
+      try { localStorage.setItem(STORE, JSON.stringify(next)); } catch { /* private mode */ }
+      return next;
+    });
+  }
 
   const needle = q.trim().toLowerCase();
   const matches = (c: Company) => {
@@ -46,21 +72,24 @@ export function ClientTable({
   const isOpen = (s: ClientStatus) => (needle ? true : open[s]);
 
   return (
-    <table className="ctable">
+    <table className="ctable" style={{ width: widths.reduce((a, b) => a + b, 0) }}>
+      <colgroup>
+        {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
+      </colgroup>
       <thead>
         <tr>
-          <th>Community</th>
-          <th>Client</th>
-          <th>Status</th>
-          <th>Mighty Networks</th>
-          <th>Upwork</th>
-          <th aria-label="Actions" />
+          {COLS.map((label, i) => (
+            <th key={i} aria-label={label || (i === 5 ? 'Archive' : 'Delete')}>
+              {label}
+              <ResizeHandle onResize={(dx) => resize(i, widths[i] + dx)} />
+            </th>
+          ))}
         </tr>
       </thead>
       {groups.filter((g) => !needle || g.rows.length > 0).map(({ status, rows }) => (
         <tbody key={status} className={`ctable__group ctable__group--${status}`}>
           <tr className="ctable__head">
-            <td colSpan={6}>
+            <td colSpan={COLS.length}>
               <button
                 type="button"
                 className="ctable__fold"
@@ -77,12 +106,37 @@ export function ClientTable({
             <ClientRow key={c.id} company={c} contacts={contacts} />
           )) : null}
           {isOpen(status) && rows.length === 0 ? (
-            <tr><td colSpan={6} className="ctable__empty">{needle ? 'No match.' : 'Nothing here.'}</td></tr>
+            <tr><td colSpan={COLS.length} className="ctable__empty">{needle ? 'No match.' : 'Nothing here.'}</td></tr>
           ) : null}
         </tbody>
       ))}
     </table>
   );
+}
+
+/** The drag edge on a header cell. Horizontal movement only. */
+function ResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
+  const last = useRef(0);
+  function down(e: React.MouseEvent) {
+    e.preventDefault();
+    last.current = e.clientX;
+    const move = (ev: MouseEvent) => {
+      const dx = ev.clientX - last.current;
+      last.current = ev.clientX;
+      onResize(dx);
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }
+  return <span className="ctable__grip" onMouseDown={down} aria-hidden="true" />;
 }
 
 function ClientRow({ company: c, contacts }: { company: Company; contacts: Contact[] }) {
@@ -133,37 +187,39 @@ function ClientRow({ company: c, contacts }: { company: Company; contacts: Conta
           ? <a className="ctable__link" href={c.upworkUrl} target="_blank" rel="noreferrer">Open ↗</a>
           : <span className="muted">—</span>}
       </td>
-      <td className="ctable__actions">
+      <td className="ctable__action">
         {c.status !== 'archived' ? (
           <button
             type="button"
-            className="iconbtn"
+            className="iconbtn iconbtn--archive"
             title="Archive"
             aria-label={`Archive ${c.name}`}
             disabled={pending}
             onClick={() => run(() => archiveClient(c.id))}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
             </svg>
           </button>
         ) : null}
+      </td>
+      <td className="ctable__action">
         <button
           type="button"
-          className="iconbtn iconbtn--danger"
+          className="iconbtn iconbtn--delete"
           title="Delete"
           aria-label={`Delete ${c.name}`}
           disabled={pending}
           onClick={() => setConfirming(true)}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
           </svg>
         </button>
         {confirming ? (
           <ConfirmDialog
             title={`Delete ${c.name}?`}
-            body={`This removes the client${others >= 0 && who ? `, ${others + 1 === 1 ? 'their contact' : `their ${others + 1} contacts`}` : ''} and any apps recorded for them. It cannot be undone. Archiving keeps everything.`}
+            body={`This removes the client${who ? (others > 0 ? `, their ${others + 1} contacts` : ', their contact') : ''} and any apps recorded for them. It cannot be undone. Archiving keeps everything.`}
             confirmLabel="Delete"
             onCancel={() => setConfirming(false)}
             onConfirm={() => { setConfirming(false); run(() => deleteClient(c.id)); }}

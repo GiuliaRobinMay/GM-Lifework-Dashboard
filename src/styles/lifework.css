@@ -563,14 +563,16 @@ button.row {
 .ctable__wrap { padding: 0; overflow-x: auto; }
 
 .ctable {
-  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   table-layout: fixed;
+  min-width: 100%;
 }
 .ctable th,
 .ctable td {
-  border: 1px solid var(--hairline);
+  border: 0;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
   padding: 8px 12px;
   text-align: left;
   vertical-align: middle;
@@ -578,27 +580,34 @@ button.row {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ctable th {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  color: var(--brand-orange-deep, #b5600f);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--brand-orange) 16%, white),
-    color-mix(in srgb, var(--brand-orange) 8%, white)
-  );
-  border-bottom-color: color-mix(in srgb, var(--brand-orange) 35%, var(--hairline));
-}
-.ctable th:nth-child(1), .ctable td:nth-child(1) { width: 26%; }
-.ctable th:nth-child(2), .ctable td:nth-child(2) { width: 21%; }
-.ctable th:nth-child(3), .ctable td:nth-child(3) { width: 17%; }
-.ctable th:nth-child(4), .ctable td:nth-child(4) { width: 15%; }
-.ctable th:nth-child(5), .ctable td:nth-child(5) { width: 13%; }
-.ctable th:nth-child(6), .ctable td:nth-child(6) { width: 8%; }
+.ctable th:last-child,
+.ctable td:last-child { border-right: 0; }
+.ctable tbody:last-child tr:last-child td { border-bottom: 0; }
 
-.ctable tr:first-child th:first-child { border-top-left-radius: var(--radius-lg, 12px); }
+/* header — the Clients orange, solid, white type */
+.ctable th {
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--brand-orange);
+  border-right-color: rgba(255, 255, 255, .35);
+  border-bottom-color: var(--brand-orange-deep);
+}
+.ctable th:last-child { border-right: 0; }
+
+/* the drag edge */
+.ctable__grip {
+  position: absolute;
+  top: 0; right: -3px; bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 1;
+}
+.ctable__grip:hover { background: rgba(255, 255, 255, .35); }
+
 
 .ctable__row:hover td { background: var(--grey-50); }
 .ctable__row--pending td { opacity: .55; }
@@ -675,25 +684,32 @@ button.row {
 .status--select:disabled { cursor: progress; }
 .status--select option { font-weight: 500; }
 
-/* actions column */
-.ctable__actions { text-align: right; white-space: nowrap; }
+/* action columns — archive violet, delete red, each its own cell */
+.ctable__action { text-align: center; padding: 4px; overflow: visible; text-overflow: clip; }
 .iconbtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-left: 2px;
+  width: 36px;
+  height: 36px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   background: none;
-  color: var(--muted);
   cursor: pointer;
+  transition: background-color 120ms, border-color 120ms;
 }
-.iconbtn svg { width: 16px; height: 16px; }
-.iconbtn:hover { border-color: var(--hairline); background: var(--surface); color: var(--ink); }
-.iconbtn--danger:hover { color: var(--brand-red); border-color: color-mix(in srgb, var(--brand-red) 35%, white); }
+.iconbtn svg { width: 20px; height: 20px; }
 .iconbtn:disabled { opacity: .4; cursor: default; }
+.iconbtn--archive { color: var(--brand-violet); }
+.iconbtn--archive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-violet) 10%, white);
+  border-color: color-mix(in srgb, var(--brand-violet) 35%, white);
+}
+.iconbtn--delete { color: var(--brand-red); }
+.iconbtn--delete:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-red) 10%, white);
+  border-color: color-mix(in srgb, var(--brand-red) 35%, white);
+}
 
 /* --------------------------------------------------------------------------
    Dialogs — native <dialog>, modal, one job each.
