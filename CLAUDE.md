@@ -17,6 +17,11 @@ it is not a rule. State inferences as questions.
 **Do not improve her data.** Her spellings, her names, her wording. If another
 source disagrees, she is right. Bring the disagreement to her; do not resolve it.
 
+**No half work.** Never create a setting, key, file or record as an empty
+placeholder "to fill in later". An empty secret in Vercel looked like a finished
+setup and cost a day. Either it is done with its real value, or it does not
+exist yet and she is told exactly what is still missing.
+
 ## Data rules
 
 - **Notion is the source of truth, and read-only.** Never write to Notion. Never
