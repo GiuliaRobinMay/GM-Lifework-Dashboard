@@ -16,6 +16,7 @@ import type {
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
 import type { Company, Contact, ClientApp } from '@/lib/crm';
+import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 import { localRows } from '@/lib/data/local';
 
 import { APPS } from '@/lib/seed/apps';
@@ -47,6 +48,12 @@ export const getContacts = () =>
   readTable<Contact>('client_contacts_api', localRows<Contact>('contacts') ?? []);
 export const getClientApps = () =>
   readTable<ClientApp>('client_apps_api', localRows<ClientApp>('clientApps') ?? []);
+
+// Upwork. Imported from the freelancer account, read-only here — the zone
+// never calls Upwork at render time. No seed: an empty list is the honest
+// answer before the import has been run.
+export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
+export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);
 
 // ---------------------------------------------------------------- selectors
 

@@ -115,13 +115,14 @@ export const DOMAINS: Domain[] = [
     group: 'Work',
     icon: 'briefcase',
     accent: 'violet',
-    blurb: 'Inbound work — invitations, proposals, contracts and what they pay.',
+    blurb: 'Inbound work — every conversation, who became a client, and what they paid.',
+    // Three tabs, not five. Contracts and financials are not places you go:
+    // they are two columns on the client you are already looking at, and
+    // offers are proposals that were answered.
     tabs: [
-      { slug: 'inbox', label: 'Inbox', blurb: 'Invitations and messages waiting on you.' },
-      { slug: 'proposals', label: 'Proposals', blurb: 'Sent, viewed, and gone quiet.' },
-      { slug: 'contracts', label: 'Contracts', blurb: 'Running contracts and their milestones.' },
-      { slug: 'offers', label: 'Offers', blurb: 'Offers on the table, and what to answer.' },
-      { slug: 'financials', label: 'Financials', blurb: 'Earnings, pending payments and connects.' },
+      { slug: 'messages', label: 'Messages', blurb: 'Every conversation, newest first.' },
+      { slug: 'clients', label: 'Clients', blurb: 'Who signed, and what they paid.' },
+      { slug: 'proposals', label: 'Proposals', blurb: 'Sent, and what came of them.' },
     ],
   },
   {

@@ -2,6 +2,7 @@ import {
   getTasks, getApps, getBrainSources, getVoiceRules,
   getContent, getCourses, getGoals, getSignals,
   getCompanies, getContacts, getClientApps,
+  getUpworkLeads, getUpworkInvoices,
 } from '@/lib/data';
 import { missingSupabaseEnv } from '@/lib/supabase';
 import { readClientTasks } from '@/lib/notion';
@@ -10,6 +11,7 @@ import type {
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
 import type { Company, Contact, ClientApp } from '@/lib/crm';
+import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 
 /**
  * Every domain page reads the same bundle.
@@ -42,6 +44,10 @@ export type Bundle = {
   /** Public env vars this build could not see. Empty when both are present. */
   missingEnv: string[];
 
+  /** Upwork, imported from the freelancer account. Read-only here. */
+  upworkLeads: UpworkLead[];
+  upworkInvoices: UpworkInvoice[];
+
   /** Open client work, read live from Notion's Daily Tasks. Not stored. */
   clientTasks: Task[];
 };
@@ -51,10 +57,12 @@ export async function loadAll(): Promise<Bundle> {
     tasks, apps, brainSources, voiceRules,
     content, courses, goals, signals,
     companies, contacts, clientApps, clientTasks,
+    upworkLeads, upworkInvoices,
   ] = await Promise.all([
     getTasks(), getApps(), getBrainSources(), getVoiceRules(),
     getContent(), getCourses(), getGoals(), getSignals(),
     getCompanies(), getContacts(), getClientApps(), readClientTasks(),
+    getUpworkLeads(), getUpworkInvoices(),
   ]);
 
   // If any read fell back, say so once rather than ten times.
@@ -81,5 +89,8 @@ export async function loadAll(): Promise<Bundle> {
     crmConnected: companies.source === 'supabase' || companies.rows.length > 0,
     clientTasks: clientTasks.rows,
     missingEnv: missingSupabaseEnv,
+
+    upworkLeads: upworkLeads.rows,
+    upworkInvoices: upworkInvoices.rows,
   };
 }

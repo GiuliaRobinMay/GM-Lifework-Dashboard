@@ -587,6 +587,32 @@ button.row {
 }
 .ctable th:last-child { border-right: 0; }
 
+/* Upwork borrows the same grid in its own violet. Colour decorates only. */
+.ctable--violet th {
+  background: var(--brand-violet);
+  border-bottom-color: var(--brand-violet-deep);
+}
+
+/* money and counts read down the column, so they align right */
+.ctable__num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* the one summed row, at the foot where a total belongs */
+.ctable__total td {
+  background: var(--grey-50);
+  font-weight: 700;
+  border-top: 2px solid var(--hairline);
+  border-bottom: 0;
+}
+
+/* the line above a table: search on the left, the count on the right */
+.tablebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tablecount { font-size: 13px; }
+
 /* the drag edge */
 .ctable__grip {
   position: absolute;
