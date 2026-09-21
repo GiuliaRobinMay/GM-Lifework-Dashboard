@@ -22,7 +22,7 @@ export function Tabs({
   if (domain.tabs.length <= 1) return null;
 
   return (
-    <nav className="tabs" aria-label={`${domain.label} sections`}>
+    <nav className={`tabs accent-${domain.accent}`} aria-label={`${domain.label} sections`}>
       {domain.tabs.map((t) => {
         const isActive = t.slug === active;
         const count = counts?.[t.slug];
