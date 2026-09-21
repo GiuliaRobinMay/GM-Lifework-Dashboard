@@ -25,7 +25,7 @@ export function upworkZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
   };
 
   return (
-    <Zone domain={domain} tab={tab} b={b}>
+    <Zone domain={domain} tab={tab} b={b} head={false}>
       <NotWired
         what="Upwork is connected, but not synced yet"
         how="The server can already read this data. The missing piece is a scheduled job that writes it into Supabase — polling Upwork on every page load would be slow and rate-limited. See docs/ROADMAP.md."

@@ -158,8 +158,8 @@
 .tabs {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  padding: 8px 24px 0;
+  gap: 3px;
+  padding: 0 24px;
   background: var(--accent, var(--brand-violet));
   overflow-x: auto;
   scrollbar-width: none;
@@ -171,9 +171,9 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 16px;
+  padding: 7px 14px;
   border: 0;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   background: rgba(255, 255, 255, .14);
   font: inherit;
   font-size: 13.5px;
@@ -795,3 +795,54 @@ button.row {
 
 .backlink { font-size: 13px; color: var(--muted); text-decoration: none; }
 .backlink:hover { color: var(--ink); text-decoration: underline; }
+
+/* --------------------------------------------------------------------------
+   The band — inside a domain the top bar takes the domain colour and the
+   tab strip continues it. One block of colour, title and search inside it.
+   -------------------------------------------------------------------------- */
+
+.topbar--band {
+  background: var(--accent, var(--brand-violet));
+  border-bottom: 0;
+  color: #fff;
+}
+.topbar--band .topbar__title { color: #fff; }
+.topbar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  margin-right: 2px;
+}
+.topbar__icon svg { width: 16px; height: 16px; }
+.topbar--band .topbar__crumbs { align-items: center; }
+
+.topbar--band .searchbtn,
+.topbar--band .clientsearch {
+  background: rgba(255, 255, 255, .16);
+  border-color: rgba(255, 255, 255, .28);
+  color: rgba(255, 255, 255, .9);
+}
+.topbar--band .searchbtn:hover,
+.topbar--band .clientsearch:focus-within { border-color: rgba(255, 255, 255, .7); }
+.topbar--band .clientsearch input { color: #fff; }
+.topbar--band .clientsearch input::placeholder { color: rgba(255, 255, 255, .75); }
+.topbar--band .clientsearch svg { color: rgba(255, 255, 255, .8); }
+.topbar--band .kbd {
+  background: rgba(255, 255, 255, .18);
+  border-color: rgba(255, 255, 255, .3);
+  color: #fff;
+}
+.topbar--band .pin {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .28);
+  color: #fff;
+}
+.topbar--band .pin:hover { background: rgba(255, 255, 255, .24); border-color: rgba(255, 255, 255, .6); }
+.topbar--band .pin .dot { background: #fff; }
+.topbar--band .btn--primary { background: #fff; color: var(--accent, var(--brand-violet)); }
+.topbar--band .btn--primary:hover:not(:disabled) { background: rgba(255, 255, 255, .9); }

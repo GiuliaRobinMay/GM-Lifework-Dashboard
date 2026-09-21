@@ -2,8 +2,8 @@
 
 import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
-import { SearchIcon } from '@/components/Icon';
-import { DOMAIN_BY_SLUG } from '@/lib/nav';
+import { Icon, SearchIcon } from '@/components/Icon';
+import { DOMAIN_BY_SLUG, type Domain } from '@/lib/nav';
 import { ClientsBar } from '@/components/ClientsBar';
 
 /**
@@ -14,25 +14,34 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
   const pathname = usePathname();
 
   let title = 'Command Center';
+  let domain: Domain | undefined;
   if (pathname.startsWith('/d/')) {
     const slug = pathname.split('/')[2];
-    const d = DOMAIN_BY_SLUG.get(slug);
-    if (d) title = d.label;
+    domain = DOMAIN_BY_SLUG.get(slug);
+    if (domain) title = domain.label;
   } else if (pathname.startsWith('/launchpad')) {
     title = 'Launchpad';
   } else if (pathname.startsWith('/settings')) {
     title = 'Settings';
   }
 
+  // Inside a domain the whole top is that domain's colour — title, search and
+  // the tab strip below it are one band, the way the sidebar icon is coloured.
+  const band = domain ? `topbar topbar--band accent-${domain.accent}` : 'topbar';
+  const crumbs = (
+    <div className="topbar__crumbs">
+      {domain ? <span className="topbar__icon"><Icon name={domain.icon} /></span> : null}
+      <span className="topbar__title">{title}</span>
+    </div>
+  );
+
   // Clients is a working surface for one thing: its bar searches clients and
   // adds one. The palette and the pinned apps belong to the rest of the
   // environment and are not drawn there.
   if (pathname.startsWith('/d/clients')) {
     return (
-      <header className="topbar">
-        <div className="topbar__crumbs">
-          <span className="topbar__title">{title}</span>
-        </div>
+      <header className={band}>
+        {crumbs}
         <div className="topbar__spacer" />
         <Suspense fallback={null}>
           <ClientsBar />
@@ -42,10 +51,8 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
   }
 
   return (
-    <header className="topbar">
-      <div className="topbar__crumbs">
-        <span className="topbar__title">{title}</span>
-      </div>
+    <header className={band}>
+      {crumbs}
 
       <div className="topbar__spacer" />
 

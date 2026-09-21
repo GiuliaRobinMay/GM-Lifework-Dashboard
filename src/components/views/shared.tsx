@@ -13,17 +13,19 @@ import { tasksForDomain, appsForDomain, relativeDay, today } from '@/lib/data';
  */
 
 export function Zone({
-  domain, tab, b, actions, children,
+  domain, tab, b, actions, children, head = true,
 }: {
   domain: Domain;
   tab: Tab;
   b: Bundle;
   actions?: ReactNode;
   children: ReactNode;
+  /** The band above already names the zone; a page heading repeats it. */
+  head?: boolean;
 }) {
   return (
     <main className="content content--wide stack">
-      <PageHead title={domain.label} blurb={tab.blurb} actions={actions} />
+      {head ? <PageHead title={domain.label} blurb={tab.blurb} actions={actions} /> : null}
       <SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />
       {children}
     </main>
