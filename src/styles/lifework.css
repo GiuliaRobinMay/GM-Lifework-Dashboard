@@ -790,7 +790,7 @@ button.row {
    tab strip continues it. One block of colour, title and search inside it.
    -------------------------------------------------------------------------- */
 
-:root { --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
+:root { --gutter: 14px; --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
 
 .topbar--band {
   display: flex;
@@ -810,7 +810,7 @@ button.row {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   height: var(--band-top);
-  padding: 0 16px 0 20px;
+  padding: 0 16px 0 var(--gutter);
 }
 .band__top .topbar__title { text-align: center; font-size: 15px; }
 .band__right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
@@ -820,7 +820,7 @@ button.row {
   display: flex;
   align-items: flex-end;
   height: var(--band-tabs);
-  padding: 0 16px 0 20px;
+  padding: 0 16px 0 var(--gutter);
 }
 .band__list {
   display: inline-flex;
@@ -828,7 +828,7 @@ button.row {
   justify-content: center;
   width: 24px;
   height: var(--band-tabs);
-  margin-right: 8px;
+  margin-right: var(--gutter);
   color: rgba(255, 255, 255, .85);
 }
 .band__list svg { width: 16px; height: 16px; }
@@ -884,3 +884,24 @@ button.row {
 .topbar--band .btn { padding: 5px 11px; font-size: 13px; }
 .band__tabs .pinrail,
 .band__tabs .btn { margin-bottom: 3px; }
+
+/* --------------------------------------------------------------------------
+   Sidebar — blackboard dark, white type. The coloured icon chips stay.
+   -------------------------------------------------------------------------- */
+
+.sidebar {
+  background: #1b1d23;
+  border-right-color: #2a2d35;
+  color: #fff;
+}
+.sidebar__brand { border-bottom-color: #2a2d35; }
+.sidebar__foot { border-top-color: #2a2d35; }
+.sidebar__wordmark { color: #fff; }
+.sidebar__brand .muted,
+.sidebar__brand .sidebar__sub { color: rgba(255, 255, 255, .6); }
+.sidebar__group > .eyebrow { color: rgba(255, 255, 255, .45); }
+.sidebar__item { color: rgba(255, 255, 255, .78); }
+.sidebar__item:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+.sidebar__item--active { background: rgba(255, 255, 255, .12); color: #fff; }
+.sidebar__count { color: rgba(255, 255, 255, .45); }
+.sidebar__item--active .sidebar__count { color: #fff; }

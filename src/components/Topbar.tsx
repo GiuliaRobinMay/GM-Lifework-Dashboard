@@ -32,7 +32,7 @@ export function Topbar({ pins }: { pins: Pin[] }) {
           <div className="band__right">
             {isClients
               ? <Suspense fallback={null}><ClientsBar part="search" /></Suspense>
-              : <PaletteButton />}
+              : null}
           </div>
         </div>
         <div className="band__tabs">
