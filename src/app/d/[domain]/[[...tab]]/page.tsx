@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation';
+
+// Read on every request. The client table writes, and a page built once at
+// deploy time would keep showing the row where it used to be.
+export const dynamic = 'force-dynamic';
 import { Tabs } from '@/components/Tabs';
-import { DOMAIN_BY_SLUG, DOMAINS, findTab } from '@/lib/nav';
+import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
 import { renderZone, zoneCounts } from '@/components/views';
 import { loadAll } from '@/lib/data/bundle';
-
-export async function generateStaticParams() {
-  return DOMAINS.flatMap((d) => d.tabs.map((t) => ({ domain: d.slug, tab: [t.slug] })));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string; tab?: string[] }> }) {
   const { domain: slug, tab } = await params;

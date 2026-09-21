@@ -80,23 +80,21 @@ export type ClientApp = {
 
 // ------------------------------------------------------------------ labels
 
+/** Exactly the options in her Notion status field — emoji, casing, order. */
 export const STATUS_LABEL: Record<ClientStatus, string> = {
-  active: 'Active',
-  contact: 'To contact',
-  sleeping: 'Paused',
-  done: 'Completed',
-  archived: 'Archived',
+  active: '🟢 ACTIVE',
+  contact: '☎️ CONTACT',
+  sleeping: '😴 SLEEPING',
+  done: '✅ DONE',
+  archived: '📦 ARCHIVE',
 };
 
-/** Live work first, history last — the order the list is read in. */
+/** Notion's sort: live work first, history last. */
 export const STATUS_ORDER: ClientStatus[] = ['active', 'contact', 'sleeping', 'done', 'archived'];
 
-export const STATUS_TONE: Record<ClientStatus, 'violet' | 'red' | 'green' | 'orange' | undefined> = {
-  active: 'green',
-  contact: 'orange',
-  sleeping: undefined,
-  done: undefined,
-  archived: undefined,
+/** DONE and ARCHIVE start folded so the working three are what you see. */
+export const STATUS_OPEN_BY_DEFAULT: Record<ClientStatus, boolean> = {
+  active: true, contact: true, sleeping: true, done: false, archived: false,
 };
 
 export const PHASE_LABEL: Record<ClientPhase, string> = {

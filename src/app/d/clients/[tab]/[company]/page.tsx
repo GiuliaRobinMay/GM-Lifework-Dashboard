@@ -1,4 +1,8 @@
 import { notFound } from 'next/navigation';
+
+// Read on every request. The client table writes, and a page built once at
+// deploy time would keep showing the row where it used to be.
+export const dynamic = 'force-dynamic';
 import { Tabs } from '@/components/Tabs';
 import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
 import { companyDetail } from '@/components/views/clients';

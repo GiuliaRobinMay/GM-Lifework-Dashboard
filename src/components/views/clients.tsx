@@ -2,24 +2,20 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { Domain, Tab } from '@/lib/nav';
 import type { Bundle } from '@/lib/data/bundle';
-import type { Company, Contact } from '@/lib/crm';
+import type { Company } from '@/lib/crm';
 import {
-  STATUS_LABEL, STATUS_ORDER, STATUS_TONE, PHASE_LABEL, fullName,
-  contactsFor, primaryContact, appsFor, companyLinks, platformOf, goLinks,
+  STATUS_LABEL, PHASE_LABEL, fullName, contactsFor, appsFor, companyLinks, platformOf,
 } from '@/lib/crm';
 import { Widget, Rows, Row, Empty, Badge } from '@/components/ui';
 import { Zone } from '@/components/views/shared';
+import { ClientTable } from '@/components/ClientTable';
 
 /**
  * Clients.
  *
- * One list, every client, past and present. Status is a column rather than a
- * tab: splitting them across Active / Pipeline / Archive meant the client you
- * were looking for was usually behind a tab you were not on.
- *
- * Each line answers the three things she opens this page for — who they are,
- * who she talks to, and where to go — so the row carries the community and
- * Upwork links directly. The name opens the detail page.
+ * One table, every client, grouped by status in Notion's order. Done and
+ * archived start folded so the three she works from are what she sees.
+ * The name opens the detail page; the status cell moves the row.
  */
 export function clientsZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
   if (!b.crmConnected) return notConnected(domain, tab, b);
@@ -29,78 +25,16 @@ export function clientsZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
 // ------------------------------------------------------------------- list
 
 function listView(domain: Domain, tab: Tab, b: Bundle): ReactNode {
-  const rows = [...b.companies].sort((a, c) => {
-    const s = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(c.status);
-    return s !== 0 ? s : a.name.localeCompare(c.name);
-  });
-
-  const counts = STATUS_ORDER
-    .map((s) => ({ status: s, n: rows.filter((r) => r.status === s).length }))
-    .filter((x) => x.n > 0);
-
   return (
     <Zone domain={domain} tab={tab} b={b}>
-      <div className="hstack" style={{ gap: 8, flexWrap: 'wrap' }}>
-        <Badge>{rows.length} clients</Badge>
-        {counts.map(({ status, n }) => (
-          <Badge key={status} tone={STATUS_TONE[status]}>
-            {STATUS_LABEL[status]} {n}
-          </Badge>
-        ))}
-      </div>
-
-      {rows.length === 0 ? (
+      {b.companies.length === 0 ? (
         <Empty>No clients in the database yet.</Empty>
       ) : (
-        <section className="card">
-          <div className="rows">
-            {rows.map((c) => (
-              <ClientLine key={c.id} company={c} contacts={b.contacts} />
-            ))}
-          </div>
+        <section className="card ctable__wrap">
+          <ClientTable companies={b.companies} contacts={b.contacts} />
         </section>
       )}
     </Zone>
-  );
-}
-
-/**
- * One client.
- *
- * Not the shared <Row>: the community and Upwork links are their own anchors,
- * and an anchor inside a link is invalid, so the name is the only thing that
- * navigates.
- */
-function ClientLine({ company, contacts }: { company: Company; contacts: Contact[] }) {
-  const who = primaryContact(contacts, company.id);
-  const others = contactsFor(contacts, company.id).length - 1;
-  const links = goLinks(company);
-
-  return (
-    <div className="row clientline">
-      <div className="clientline__name">
-        <Link href={`/d/clients/all/${company.id}`} className="row__title clientline__link">
-          {company.name}
-        </Link>
-      </div>
-
-      <div className="clientline__who muted">
-        {who ? fullName(who) : '—'}
-        {others > 0 ? <span className="badge" style={{ marginLeft: 6 }}>+{others}</span> : null}
-      </div>
-
-      <div className="clientline__status">
-        <Badge tone={STATUS_TONE[company.status]}>{STATUS_LABEL[company.status]}</Badge>
-      </div>
-
-      <div className="clientline__go">
-        {links.map((l) => (
-          <a key={l.url} className="golink" href={l.url} target="_blank" rel="noreferrer">
-            {l.label}
-          </a>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -125,7 +59,7 @@ export function companyDetail(c: Company, b: Bundle): ReactNode {
           </p>
         </div>
         <div className="pagehead__actions">
-          <Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+          <span className={`status status--${c.status}`}>{STATUS_LABEL[c.status]}</span>
         </div>
       </div>
 
