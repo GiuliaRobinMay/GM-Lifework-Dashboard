@@ -123,7 +123,7 @@ export function PageHead({
     <div className="pagehead">
       <div className="pagehead__text">
         <h1 className="page-title">{title}</h1>
-        <p className="muted" style={{ marginTop: 4 }}>{blurb}</p>
+        {blurb ? <p className="muted" style={{ marginTop: 4 }}>{blurb}</p> : null}
       </div>
       {actions ? <div className="pagehead__actions">{actions}</div> : null}
     </div>

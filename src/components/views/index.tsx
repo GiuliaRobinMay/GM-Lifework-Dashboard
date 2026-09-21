@@ -20,9 +20,9 @@ import { upworkZone } from '@/components/views/upwork';
  * the shared bundle, and returns the body under the tab strip. Adding a zone
  * is a config entry plus a case — never a new route.
  */
-export function renderZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
+export function renderZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNode {
   switch (domain.slug) {
-    case 'clients': return clientsZone(domain, tab, b);
+    case 'clients': return clientsZone(domain, tab, b, q);
     case 'brain': return brainZone(domain, tab, b);
     case 'content': return contentZone(domain, tab, b);
     case 'apps': return appsZone(domain, tab, b);

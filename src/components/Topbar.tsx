@@ -1,8 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { SearchIcon } from '@/components/Icon';
 import { DOMAIN_BY_SLUG } from '@/lib/nav';
+import { ClientsBar } from '@/components/ClientsBar';
 
 /**
  * The top bar carries three things and nothing else: where you are, the way
@@ -22,9 +24,22 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
     title = 'Settings';
   }
 
-  // Clients is a working surface for one thing. The day-to-day app chips
-  // belong in the zones they serve, not over a client list. Search stays.
-  const showPins = !pathname.startsWith('/d/clients');
+  // Clients is a working surface for one thing: its bar searches clients and
+  // adds one. The palette and the pinned apps belong to the rest of the
+  // environment and are not drawn there.
+  if (pathname.startsWith('/d/clients')) {
+    return (
+      <header className="topbar">
+        <div className="topbar__crumbs">
+          <span className="topbar__title">{title}</span>
+        </div>
+        <div className="topbar__spacer" />
+        <Suspense fallback={null}>
+          <ClientsBar />
+        </Suspense>
+      </header>
+    );
+  }
 
   return (
     <header className="topbar">
@@ -34,7 +49,7 @@ export function Topbar({ pins }: { pins: { id: string; name: string; url: string
 
       <div className="topbar__spacer" />
 
-      {showPins ? (
+      {true ? (
       <div className="pinrail" aria-label="Pinned apps">
         {pins.map((p, i) => (
           <a

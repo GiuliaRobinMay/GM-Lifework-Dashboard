@@ -24,11 +24,13 @@ export async function generateMetadata({ params }: { params: Promise<{ domain: s
  * config entry plus a case — never a new route.
  */
 export default async function DomainPage({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ domain: string; tab?: string[] }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const { domain: slug, tab } = await params;
+  const { q = '' } = await searchParams;
   const domain = DOMAIN_BY_SLUG.get(slug);
   if (!domain) notFound();
 
@@ -40,7 +42,7 @@ export default async function DomainPage({
   return (
     <>
       <Tabs domain={domain} active={active.slug} counts={zoneCounts(domain, bundle)} />
-      {renderZone(domain, active, bundle)}
+      {renderZone(domain, active, bundle, q)}
     </>
   );
 }

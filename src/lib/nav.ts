@@ -102,11 +102,11 @@ export const DOMAINS: Domain[] = [
     group: 'Work',
     icon: 'users',
     accent: 'orange',
-    blurb: 'Every client, past and present.',
+    blurb: '',
     // One list, no sub-zones. Status is a column here, not a tab — splitting
     // the clients across five tabs hid the ones she was looking for.
     tabs: [
-      { slug: 'all', label: 'All clients', blurb: 'Every client, past and present.' },
+      { slug: 'all', label: 'All clients', blurb: '' },
     ],
   },
   {

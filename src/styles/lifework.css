@@ -583,14 +583,20 @@ button.row {
   font-weight: 600;
   letter-spacing: .02em;
   text-transform: uppercase;
-  color: var(--muted);
-  background: var(--grey-50);
+  color: var(--brand-orange-deep, #b5600f);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-orange) 16%, white),
+    color-mix(in srgb, var(--brand-orange) 8%, white)
+  );
+  border-bottom-color: color-mix(in srgb, var(--brand-orange) 35%, var(--hairline));
 }
-.ctable th:nth-child(1), .ctable td:nth-child(1) { width: 30%; }
-.ctable th:nth-child(2), .ctable td:nth-child(2) { width: 24%; }
-.ctable th:nth-child(3), .ctable td:nth-child(3) { width: 18%; }
+.ctable th:nth-child(1), .ctable td:nth-child(1) { width: 26%; }
+.ctable th:nth-child(2), .ctable td:nth-child(2) { width: 21%; }
+.ctable th:nth-child(3), .ctable td:nth-child(3) { width: 17%; }
 .ctable th:nth-child(4), .ctable td:nth-child(4) { width: 15%; }
 .ctable th:nth-child(5), .ctable td:nth-child(5) { width: 13%; }
+.ctable th:nth-child(6), .ctable td:nth-child(6) { width: 8%; }
 
 .ctable tr:first-child th:first-child { border-top-left-radius: var(--radius-lg, 12px); }
 
@@ -631,7 +637,7 @@ button.row {
 .ctable__caret { width: 12px; color: var(--muted); font-size: 12px; }
 .ctable__count { font-size: 12px; color: var(--muted); }
 
-/* status chips — the Notion option colours, so the two screens read alike */
+/* status chips — the brand palette. Archive is grey. */
 .status {
   display: inline-flex;
   align-items: center;
@@ -644,11 +650,16 @@ button.row {
   white-space: nowrap;
   border: 1px solid transparent;
 }
-.status--active   { background: #e3f3e6; color: #1f6b3a; border-color: #b9e0c3; }
-.status--contact  { background: #fbe4e4; color: #8d2b2b; border-color: #f2bcbc; }
-.status--sleeping { background: #e4ebf7; color: #2e4a86; border-color: #bccbea; }
-.status--done     { background: #ececee; color: #4a4d55; border-color: #d5d8e0; }
-.status--archived { background: #f0e8df; color: #6a4e2e; border-color: #ddcdb8; }
+.status--active   { --c: var(--brand-green);  }
+.status--contact  { --c: var(--brand-red);    }
+.status--sleeping { --c: var(--brand-violet); }
+.status--done     { --c: var(--brand-orange); }
+.status--archived { --c: #64748b; }
+.status {
+  background: color-mix(in srgb, var(--c) 12%, white);
+  color: color-mix(in srgb, var(--c) 85%, black);
+  border-color: color-mix(in srgb, var(--c) 35%, white);
+}
 
 .status--select {
   appearance: none;
@@ -663,3 +674,108 @@ button.row {
 }
 .status--select:disabled { cursor: progress; }
 .status--select option { font-weight: 500; }
+
+/* actions column */
+.ctable__actions { text-align: right; white-space: nowrap; }
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.iconbtn svg { width: 16px; height: 16px; }
+.iconbtn:hover { border-color: var(--hairline); background: var(--surface); color: var(--ink); }
+.iconbtn--danger:hover { color: var(--brand-red); border-color: color-mix(in srgb, var(--brand-red) 35%, white); }
+.iconbtn:disabled { opacity: .4; cursor: default; }
+
+/* --------------------------------------------------------------------------
+   Dialogs — native <dialog>, modal, one job each.
+   -------------------------------------------------------------------------- */
+
+.dialog {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg, 12px);
+  padding: 0;
+  width: min(440px, calc(100vw - 32px));
+  background: var(--surface, #fff);
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgba(20, 22, 28, .18);
+}
+.dialog--form { width: min(560px, calc(100vw - 32px)); }
+.dialog::backdrop { background: rgba(20, 22, 28, .35); }
+.dialog__body { padding: 22px 24px; }
+.dialog__title { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.dialog__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.btn--danger { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
+.btn--danger:hover:not(:disabled) { background: var(--brand-red-deep, #c1123a); border-color: var(--brand-red-deep, #c1123a); }
+
+/* form fields */
+.field { margin-top: 14px; }
+.field--pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control, 8px);
+  background: var(--surface, #fff);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus { outline: 2px solid color-mix(in srgb, var(--brand-orange) 45%, white); border-color: var(--brand-orange); }
+.field textarea { resize: vertical; }
+.field__error { margin-top: 12px; font-size: 13px; color: var(--brand-red); }
+
+/* client search box in the top bar */
+.clientsearch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 300px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control, 8px);
+  background: var(--surface, #fff);
+  margin-right: 10px;
+}
+.clientsearch svg { width: 15px; height: 15px; flex: none; stroke-width: 1.8; color: var(--faint); }
+.clientsearch input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.clientsearch:focus-within { border-color: var(--brand-orange); }
+
+/* facts on the detail page */
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 24px; margin: 0; }
+.facts__item dt { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.facts__item dd { margin: 4px 0 0; font-size: 14px; }
+.facts a { color: inherit; }
+
+.backlink { font-size: 13px; color: var(--muted); text-decoration: none; }
+.backlink:hover { color: var(--ink); text-decoration: underline; }
