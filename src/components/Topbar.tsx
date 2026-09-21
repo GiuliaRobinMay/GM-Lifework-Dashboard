@@ -67,10 +67,9 @@ export function Topbar({ pins }: { pins: Pin[] }) {
 
 function PaletteButton() {
   return (
-    <button type="button" className="searchbtn" data-open-palette>
+    <button type="button" className="searchbtn" data-open-palette aria-label="Search">
       <SearchIcon />
-      Jump to anything
-      <span className="kbd">⌘K</span>
+      Search
     </button>
   );
 }

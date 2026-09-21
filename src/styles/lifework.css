@@ -170,13 +170,13 @@
 .tabs__item {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 16px;
+  height: 29px;
+  padding: 0 14px;
   border: 0;
   border-radius: 0;
   background: rgba(255, 255, 255, .14);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, .92);
   text-decoration: none;
@@ -790,7 +790,7 @@ button.row {
    tab strip continues it. One block of colour, title and search inside it.
    -------------------------------------------------------------------------- */
 
-:root { --band-top: 52px; --band-tabs: 40px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
+:root { --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
 
 .topbar--band {
   display: flex;
@@ -812,7 +812,7 @@ button.row {
   height: var(--band-top);
   padding: 0 16px 0 20px;
 }
-.band__top .topbar__title { text-align: center; font-size: 16px; }
+.band__top .topbar__title { text-align: center; font-size: 15px; }
 .band__right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
 /* row 2: list icon, the tabs, then whatever lives on the right */
@@ -826,12 +826,12 @@ button.row {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 40px;
-  margin-right: 10px;
+  width: 24px;
+  height: var(--band-tabs);
+  margin-right: 8px;
   color: rgba(255, 255, 255, .85);
 }
-.band__list svg { width: 18px; height: 18px; }
+.band__list svg { width: 16px; height: 16px; }
 .band__tabs .pinrail,
 .band__tabs .btn { align-self: center; margin-bottom: 2px; }
 
@@ -840,14 +840,14 @@ button.row {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 7px;
   background: rgba(255, 255, 255, .18);
   color: #fff;
   margin-right: 2px;
 }
-.topbar__icon svg { width: 16px; height: 16px; }
+.topbar__icon svg { width: 15px; height: 15px; }
 .topbar--band .topbar__crumbs { align-items: center; }
 
 .topbar--band .searchbtn,
@@ -875,3 +875,12 @@ button.row {
 .topbar--band .pin .dot { background: #fff; }
 .topbar--band .btn--primary { background: #fff; color: var(--accent, var(--brand-violet)); }
 .topbar--band .btn--primary:hover:not(:disabled) { background: rgba(255, 255, 255, .9); }
+
+/* compact controls inside the band */
+.topbar--band .searchbtn,
+.topbar--band .clientsearch { width: 220px; height: 28px; padding: 0 10px; font-size: 13px; }
+.topbar--band .clientsearch input { padding: 0; }
+.topbar--band .pin { padding: 3px 9px 3px 6px; font-size: 12px; }
+.topbar--band .btn { padding: 5px 11px; font-size: 13px; }
+.band__tabs .pinrail,
+.band__tabs .btn { margin-bottom: 3px; }
