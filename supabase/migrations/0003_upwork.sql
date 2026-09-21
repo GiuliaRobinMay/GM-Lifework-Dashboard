@@ -7,8 +7,21 @@ do $$ begin
   create type lead_status as enum ('lead', 'client', 'lost');
 exception when duplicate_object then null; end $$;
 
+-- The Upwork accounts this dashboard reads. One for now; the agency can be
+-- switched on later by adding a row and syncing it.
+create table if not exists upwork_accounts (
+  id      text primary key,          -- Upwork org_uid
+  name    text not null,
+  role    text not null,             -- Freelancer / Agency
+  enabled boolean not null default true
+);
+insert into upwork_accounts (id, name, role) values
+  ('1352608530249863169', 'Geertrui Lauwaert', 'Freelancer')
+on conflict (id) do nothing;
+
 create table if not exists upwork_leads (
   id                text primary key,                 -- the Upwork room id
+  account_id        text not null references upwork_accounts (id),
   name              text not null,                    -- as Upwork shows it
   status            lead_status not null default 'lead',
   client_company_id text references client_companies (id) on delete set null,
@@ -49,6 +62,7 @@ create table if not exists upwork_leads (
   updated_at        timestamptz not null default now()
 );
 
+create index if not exists upwork_leads_account_idx  on upwork_leads (account_id);
 create index if not exists upwork_leads_status_idx   on upwork_leads (status);
 create index if not exists upwork_leads_activity_idx on upwork_leads (last_activity_at desc);
 
@@ -56,6 +70,7 @@ create index if not exists upwork_leads_activity_idx on upwork_leads (last_activ
 -- time" is made of.
 create table if not exists upwork_invoices (
   id           bigint generated always as identity primary key,
+  account_id   text not null references upwork_accounts (id),
   lead_id      text references upwork_leads (id) on delete cascade,
   client_name  text not null,                          -- as Upwork bills it
   job_title    text not null,
@@ -66,7 +81,7 @@ create table if not exists upwork_invoices (
   fee          numeric(12,2) not null default 0,
   currency     text not null default 'USD',
   synced_at    timestamptz not null default now(),
-  unique (client_name, job_title, period_from, period_to)
+  unique (account_id, client_name, job_title, period_from, period_to)
 );
 
 create index if not exists upwork_invoices_lead_idx on upwork_invoices (lead_id);
@@ -74,9 +89,12 @@ create index if not exists upwork_invoices_lead_idx on upwork_invoices (lead_id)
 create or replace trigger upwork_leads_touch before update on upwork_leads
   for each row execute function touch_updated_at();
 
+alter table upwork_accounts enable row level security;
 alter table upwork_leads    enable row level security;
 alter table upwork_invoices enable row level security;
 
+drop policy if exists "anon reads upwork_accounts" on upwork_accounts;
+create policy "anon reads upwork_accounts" on upwork_accounts for select using (true);
 drop policy if exists "anon reads upwork_leads"    on upwork_leads;
 drop policy if exists "anon reads upwork_invoices" on upwork_invoices;
 create policy "anon reads upwork_leads"    on upwork_leads    for select using (true);
@@ -85,7 +103,7 @@ create policy "anon reads upwork_invoices" on upwork_invoices for select using (
 drop view if exists upwork_leads_api;
 create view upwork_leads_api with (security_invoker = true) as
   select
-    id, name, status::text, client_company_id as "clientCompanyId",
+    id, account_id as "accountId", name, status::text, client_company_id as "clientCompanyId",
     room_url as "roomUrl", room_type as "roomType",
     first_contact_at::text as "firstContactAt", last_activity_at::text as "lastActivityAt",
     awaiting_reply as "awaitingReply", unread,
@@ -101,9 +119,9 @@ create view upwork_leads_api with (security_invoker = true) as
 drop view if exists upwork_invoices_api;
 create view upwork_invoices_api with (security_invoker = true) as
   select
-    id, lead_id as "leadId", client_name as "clientName", job_title as "jobTitle",
+    id, account_id as "accountId", lead_id as "leadId", client_name as "clientName", job_title as "jobTitle",
     period_from::text as "periodFrom", period_to::text as "periodTo",
     billed, earned, fee, currency
   from upwork_invoices;
 
-grant select on upwork_leads_api, upwork_invoices_api to anon, authenticated;
+grant select on upwork_accounts, upwork_leads_api, upwork_invoices_api to anon, authenticated;
