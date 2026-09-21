@@ -14,7 +14,7 @@ import { createClient, type NewClient } from '@/app/d/clients/actions';
  * address is shareable. Nothing else from the general top bar is here — the
  * command palette and the pinned apps belong to the rest of the environment.
  */
-export function ClientsBar() {
+export function ClientsBar({ part = 'both' }: { part?: 'search' | 'add' | 'both' }) {
   const router = useRouter();
   const params = useSearchParams();
   const [q, setQ] = useState(params.get('q') ?? '');
@@ -35,6 +35,7 @@ export function ClientsBar() {
 
   return (
     <>
+      {part !== 'add' ? (
       <label className="clientsearch">
         <SearchIcon />
         <input
@@ -45,9 +46,12 @@ export function ClientsBar() {
           aria-label="Search clients"
         />
       </label>
+      ) : null}
+      {part !== 'search' ? (
       <button type="button" className="btn btn--primary" onClick={() => setAdding(true)}>
         + Add client
       </button>
+      ) : null}
       {adding ? <AddClientDialog onClose={() => setAdding(false)} /> : null}
     </>
   );

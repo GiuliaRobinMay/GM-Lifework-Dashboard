@@ -3,9 +3,8 @@ import { notFound } from 'next/navigation';
 // Read on every request. The client table writes, and a page built once at
 // deploy time would keep showing the row where it used to be.
 export const dynamic = 'force-dynamic';
-import { Tabs } from '@/components/Tabs';
 import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
-import { renderZone, zoneCounts } from '@/components/views';
+import { renderZone } from '@/components/views';
 import { loadAll } from '@/lib/data/bundle';
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string; tab?: string[] }> }) {
@@ -41,7 +40,6 @@ export default async function DomainPage({
 
   return (
     <>
-      <Tabs domain={domain} active={active.slug} counts={zoneCounts(domain, bundle)} />
       {renderZone(domain, active, bundle, q)}
     </>
   );
