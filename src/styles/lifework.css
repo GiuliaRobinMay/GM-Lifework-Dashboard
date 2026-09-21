@@ -174,7 +174,7 @@
   padding: 0 14px;
   border: 0;
   border-radius: 0;
-  background: rgba(255, 255, 255, .14);
+  background: rgba(0, 0, 0, .18);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -184,7 +184,7 @@
   cursor: pointer;
   transition: background-color 150ms, color 150ms;
 }
-.tabs__item:hover { background: rgba(255, 255, 255, .24); color: #fff; }
+.tabs__item:hover { background: rgba(0, 0, 0, .26); color: #fff; }
 
 /* The active tab is the page colour lifting out of the band. */
 .tabs__item--active,
