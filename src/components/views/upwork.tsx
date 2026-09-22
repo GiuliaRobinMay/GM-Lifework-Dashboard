@@ -3,6 +3,7 @@ import type { Domain, Tab } from '@/lib/nav';
 import type { Bundle } from '@/lib/data/bundle';
 import { clientsOnly } from '@/lib/upwork';
 import { Empty, SourceNote } from '@/components/ui';
+import { Portal, SideReserved } from '@/components/views/shared';
 import { MessagesTable, UpworkClientsTable } from '@/components/UpworkTables';
 
 /**
@@ -18,10 +19,12 @@ import { MessagesTable, UpworkClientsTable } from '@/components/UpworkTables';
  */
 export function upworkZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
   return (
-    <main className="content content--wide stack">
-      <SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />
+    <Portal
+      note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}
+      side={<SideReserved zone="Upwork" />}
+    >
       {body(tab, b)}
-    </main>
+    </Portal>
   );
 }
 

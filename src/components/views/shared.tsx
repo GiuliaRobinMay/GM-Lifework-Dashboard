@@ -32,6 +32,51 @@ export function Zone({
   );
 }
 
+/**
+ * A portal view: the table on the left, a side banner on the right.
+ *
+ * Two thirds for the work, one third for whatever belongs beside it. The
+ * left column is pinned to the page edge and clips rather than pushing the
+ * banner out of the way — a table that grows a column should scroll, not
+ * steal the space next to it. The banner sticks as the table scrolls.
+ */
+export function Portal({
+  note, children, side,
+}: {
+  /** Drawn full width above both columns — it is about the page, not the table. */
+  note?: ReactNode;
+  children: ReactNode;
+  side: ReactNode;
+}) {
+  return (
+    <main className="portal">
+      {note}
+      <div className="portal__split">
+        <div className="portal__main">{children}</div>
+        <aside className="portal__side">{side}</aside>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * The side banner before she has said what goes in it.
+ *
+ * It says so rather than showing a plausible-looking widget. An empty panel
+ * dressed as a finished one is the thing she has asked me twice not to do.
+ */
+export function SideReserved({ zone }: { zone: string }) {
+  return (
+    <section className="card sidepanel">
+      <p className="sidepanel__title">Side banner</p>
+      <p className="sidepanel__body">
+        This third of the page is kept for {zone}. Tell me what belongs here
+        and I will build it. Until then it stays empty on purpose.
+      </p>
+    </section>
+  );
+}
+
 /** Open work for this domain. */
 export function WorkWidget({
   domain, b, title = 'Open work',

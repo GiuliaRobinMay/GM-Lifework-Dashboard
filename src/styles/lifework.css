@@ -549,7 +549,24 @@ button.row {
    Every cell has a line on all sides: this is scanned, not read.
    -------------------------------------------------------------------------- */
 
-.ctable__wrap { padding: 0; overflow-x: auto; }
+/* The table scrolls sideways inside its column rather than widening the page.
+   The scrollbar is forced visible: an overlay bar that only appears on hover
+   is a scrollbar you do not know is there. */
+.ctable__wrap {
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: auto;
+  scrollbar-color: var(--faint) var(--grey-100);
+}
+.ctable__wrap::-webkit-scrollbar { height: 12px; }
+.ctable__wrap::-webkit-scrollbar-track { background: var(--grey-100); }
+.ctable__wrap::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 6px;
+  border: 3px solid var(--grey-100);
+}
+.ctable__wrap::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
 
 .ctable {
   border-collapse: collapse;
@@ -587,10 +604,13 @@ button.row {
 }
 .ctable th:last-child { border-right: 0; }
 
-/* Upwork borrows the same grid in its own violet. Colour decorates only. */
+/* Upwork's header is dark grey, not violet: the band above is already violet,
+   and two purples stacked is one too many. Square, because a rounded header
+   on a ruled grid reads as a card pretending to be a table. */
 .ctable--violet th {
-  background: var(--brand-violet);
-  border-bottom-color: var(--brand-violet-deep);
+  background: var(--table-head);
+  border-bottom-color: var(--table-head-deep);
+  border-right-color: rgba(255, 255, 255, .22);
 }
 
 /* money and counts read down the column, so they align right */
@@ -603,6 +623,68 @@ button.row {
   border-top: 2px solid var(--hairline);
   border-bottom: 0;
 }
+
+/* --------------------------------------------------------------------------
+   Portal view — the table left, a side banner right.
+
+   Two thirds work, one third banner. The left column carries min-width: 0 so
+   a wide table scrolls inside it rather than pushing the banner off the page.
+   Padding is one gutter on every side, so the gap above the table matches the
+   gap beside it and the whole thing sits in the same frame as the band.
+   -------------------------------------------------------------------------- */
+
+.portal {
+  width: 100%;
+  max-width: none;
+  padding: var(--gutter);
+  box-sizing: border-box;
+}
+
+.portal__split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--gutter);
+  align-items: start;
+}
+
+/* min-width: 0 is what makes the table clip instead of shoving the banner. */
+.portal__main { min-width: 0; }
+.portal__main > * + * { margin-top: var(--gutter); }
+
+.portal__side {
+  position: sticky;
+  top: calc(var(--band-h) + var(--gutter));
+  min-width: 0;
+}
+
+/* A note about the page, not the table — full width, above both columns. */
+.portal > .notice,
+.portal > .notice + .portal__split { margin-top: 0; }
+.portal > .notice { margin-bottom: var(--gutter); }
+
+/* Narrow screens stack: the banner is context, so it goes under the work. */
+@media (max-width: 1100px) {
+  .portal__split { grid-template-columns: 1fr; }
+  .portal__side { position: static; }
+}
+
+.sidepanel { padding: 16px; border-radius: 0; }
+.sidepanel__title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sidepanel__body {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+/* Square the table card: the header row is the top edge, and it is a grid. */
+.ctable__wrap { border-radius: 0; }
 
 /* the line above a table: search on the left, the count on the right */
 .tablebar {
@@ -816,7 +898,7 @@ button.row {
    tab strip continues it. One block of colour, title and search inside it.
    -------------------------------------------------------------------------- */
 
-:root { --gutter: 14px; --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
+:root { --table-head: #343a46; --table-head-deep: #22262f; --gutter: 14px; --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
 
 .topbar--band {
   display: flex;
