@@ -119,6 +119,63 @@
 
 .topbar__spacer { flex: 1; }
 
+/* The Command Center bar: purple, the name in white, nothing else on it. */
+.topbar--purple {
+  background: var(--brand-violet);
+  border-bottom-color: var(--brand-violet-deep);
+  backdrop-filter: none;
+  padding: 16px 32px;
+}
+.topbar--purple .topbar__title { color: #fff; font-size: 17px; }
+
+/* --------------------------------------------------------------------------
+   App squares — the Command Center overview. One square per application,
+   its real logo on top, its name under it. One click out.
+   -------------------------------------------------------------------------- */
+
+.apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 112px;
+  height: 112px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.app:hover {
+  border-color: var(--faint);
+  box-shadow: var(--shadow-hover);
+}
+.app__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+.app__logo--bordered { border: 1px solid var(--hairline); }
+.app__logo svg { width: 24px; height: 24px; }
+.app__name {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  margin: 0;
+}
+.app__mono { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+
 /* The fake input that opens the palette. Looks like a field, acts as a button. */
 .searchbtn {
   display: inline-flex;

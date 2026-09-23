@@ -86,14 +86,18 @@ export function Topbar({ pins, overrides = {} }: { pins: Pin[]; overrides?: Reco
     : pathname.startsWith('/settings') ? 'Settings'
     : 'Command Center';
 
+  // The Command Center bar is purple and carries nothing but its name: no
+  // pins, no search (Giulia, 23 Sep 2026). The other pages keep the light bar.
+  const isHome = title === 'Command Center';
+
   return (
-    <header className="topbar">
+    <header className={isHome ? 'topbar topbar--purple' : 'topbar'}>
       <div className="topbar__crumbs">
         <span className="topbar__title">{title}</span>
       </div>
       <div className="topbar__spacer" />
-      <PinRail pins={pins} />
-      <PaletteButton />
+      {isHome ? null : <PinRail pins={pins} />}
+      {isHome ? null : <PaletteButton />}
     </header>
   );
 }
