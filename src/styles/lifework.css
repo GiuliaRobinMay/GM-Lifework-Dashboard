@@ -1004,17 +1004,20 @@ button.row {
 
 /* The active tab is white and flush to the bottom, so it runs into the
    toolbar below and the two read as one surface. */
-/* The active tab, the toolbar and the grid are one raised surface. The tab
-   casts its shadow up onto the strip and left onto the navigation; the edge
-   below it carries the same shadow all the way down (.shell__main::before). */
+/* The active tab is the top step of the raised surface, so it carries the
+   shadow on three sides — left, top and right. It sits above the toolbar's
+   own shadow (z-index 3 against 2) so that shadow does not darken it. */
 .tabs__item--active {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   background: var(--surface);
   color: var(--ink);
   font-weight: 600;
   border-radius: 0;
-  box-shadow: -3px -3px 6px rgba(10, 12, 18, .28);
+  box-shadow:
+    0 -3px 7px -1px rgba(10, 12, 18, .30),
+    -5px 0 7px -3px rgba(10, 12, 18, .30),
+    5px 0 7px -3px rgba(10, 12, 18, .30);
 }
 .tabs__item--active:hover { background: var(--surface); }
 
@@ -1195,10 +1198,13 @@ main.portal {
    The raised edge.
 
    Everything from the top of the active tab downwards — the tab, the toolbar
-   and the grid — reads as one surface lifted off the page. Its shadow falls
-   away from the table: leftwards over the navigation, and upwards where the
-   tab meets the strip. The main column has to paint above the sidebar for
-   the shadow to land on it at all.
+   and the grid — is one surface lifted off the page, and its whole outline
+   carries the shadow: down the left side, across the top of the toolbar, and
+   around the three free sides of the tab itself.
+
+   These are gradients, not box-shadows. A box-shadow on a one-pixel strip
+   casts almost no ink, which is why the left edge was invisible; a gradient
+   is the same effect with the density stated outright.
    -------------------------------------------------------------------------- */
 
 .sidebar { z-index: 1; }
@@ -1208,16 +1214,31 @@ main.portal {
   z-index: 2;
 }
 
+/* down the left, from the top of the tab to the bottom of the page */
 .shell__main::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: -14px;
+  width: 14px;
   top: var(--chrome-top);
   bottom: 0;
-  width: 1px;
-  box-shadow: -4px 0 7px rgba(10, 12, 18, .17);
+  background: linear-gradient(to right, rgba(10, 12, 18, 0), rgba(10, 12, 18, .19));
   pointer-events: none;
   z-index: 30;
+}
+
+/* across the top of the toolbar, the full width, under the tabs that are not
+   active. The active tab paints above this, so it stays clean. */
+.chrome__tool { position: relative; z-index: 2; }
+.chrome__tool::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -11px;
+  height: 11px;
+  background: linear-gradient(to bottom, rgba(10, 12, 18, 0), rgba(10, 12, 18, .22));
+  pointer-events: none;
 }
 
 /* --------------------------------------------------------------------------
