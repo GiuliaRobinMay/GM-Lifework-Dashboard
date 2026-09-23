@@ -866,7 +866,8 @@ button.row {
   --grid-line-strong: #d9d9d9;
   --grid-row: 32px;
   --grid-canvas: #f6f8fc;
-  --grid-head-ink: #616670;
+  --grid-head-bg: #eceef2;
+  --grid-head-ink: #4a4f59;
 
   /* the sidebar corner block: dark, but grey rather than black */
   --brand-block: #242a36;
@@ -1084,10 +1085,10 @@ button.row {
   text-overflow: ellipsis;
 }
 
-/* the header: white, grey type, one heavier rule under the whole row */
+/* the header: a grey band across the full width, one heavier rule under it */
 .grid2__table th {
   position: relative;
-  background: var(--surface);
+  background: var(--grid-head-bg);
   border-bottom: 1px solid var(--grid-line-strong);
   font-size: 13px;
   font-weight: 500;
