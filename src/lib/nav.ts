@@ -23,6 +23,8 @@ export type Tab = {
   label: string;
   /** One line explaining what this zone is for. Shown under the page title. */
   blurb: string;
+  /** Draws a divider before this tab: what follows is a different kind of thing. */
+  startsGroup?: boolean;
 };
 
 export type Domain = {
@@ -122,7 +124,9 @@ export const DOMAINS: Domain[] = [
     tabs: [
       { slug: 'messages', label: 'Messages', blurb: 'Every conversation, newest first.' },
       { slug: 'clients', label: 'Clients', blurb: 'Who signed, and what they paid.' },
-      { slug: 'proposals', label: 'Proposals', blurb: 'Sent, and what came of them.' },
+      // Messages and Clients are people; a proposal is a document. The strip
+      // shows that break with a divider rather than leaving it to be guessed.
+      { slug: 'proposals', label: 'Proposals', blurb: 'Sent, and what came of them.', startsGroup: true },
     ],
   },
   {

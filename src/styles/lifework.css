@@ -955,10 +955,21 @@ button.row {
   height: 100%;
   gap: 0;
   padding: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  /* visible, not auto: an auto overflow would clip the raised tab's shadow,
+     and the strip never holds more than five tabs. */
+  overflow: visible;
 }
-.tabs::-webkit-scrollbar { display: none; }
+
+.tabs__slot { display: inline-flex; align-items: stretch; }
+
+/* the break between two kinds of tab */
+.tabs__divider {
+  align-self: center;
+  width: 1px;
+  height: 16px;
+  margin: 0 10px;
+  background: rgba(255, 255, 255, .45);
+}
 
 .tabs__item {
   display: inline-flex;
@@ -979,12 +990,17 @@ button.row {
 
 /* The active tab is white and flush to the bottom, so it runs into the
    toolbar below and the two read as one surface. */
+/* The active tab, the toolbar and the grid are one raised surface. The tab
+   casts its shadow up onto the strip and left onto the navigation; the edge
+   below it carries the same shadow all the way down (.shell__main::before). */
 .tabs__item--active {
+  position: relative;
+  z-index: 1;
   background: var(--surface);
   color: var(--ink);
   font-weight: 600;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: -3px -3px 6px rgba(10, 12, 18, .28);
 }
 .tabs__item--active:hover { background: var(--surface); }
 
@@ -1160,3 +1176,32 @@ main.portal {
   color: var(--muted);
 }
 .chrome__burger svg { width: 100%; height: 100%; }
+
+/* --------------------------------------------------------------------------
+   The raised edge.
+
+   Everything from the top of the active tab downwards — the tab, the toolbar
+   and the grid — reads as one surface lifted off the page. Its shadow falls
+   away from the table: leftwards over the navigation, and upwards where the
+   tab meets the strip. The main column has to paint above the sidebar for
+   the shadow to land on it at all.
+   -------------------------------------------------------------------------- */
+
+.sidebar { z-index: 1; }
+
+.shell__main {
+  position: relative;
+  z-index: 2;
+}
+
+.shell__main::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--chrome-top);
+  bottom: 0;
+  width: 1px;
+  box-shadow: -4px 0 7px rgba(10, 12, 18, .17);
+  pointer-events: none;
+  z-index: 30;
+}
