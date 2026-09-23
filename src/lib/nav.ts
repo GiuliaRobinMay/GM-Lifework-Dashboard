@@ -236,6 +236,48 @@ export function findTab(domain: Domain, slug: string | undefined): Tab {
   return domain.tabs.find((t) => t.slug === slug) ?? defaultTab(domain);
 }
 
+/**
+ * What she has renamed or recoloured, from the database.
+ *
+ * The rail and the tabs stay in this file: that is the architecture, and it
+ * is code. Only these three are hers to change from the interface, so a
+ * rename never needs a deploy.
+ */
+export type DomainOverride = {
+  slug: string;
+  name: string | null;
+  icon: string | null;
+  accent: string | null;
+};
+
+const ICON_NAMES = new Set<string>([
+  'home', 'tribe', 'academy', 'star', 'users', 'briefcase',
+  'rocket', 'megaphone', 'brain', 'book', 'heart', 'coins', 'grid', 'settings',
+]);
+const ACCENTS = new Set<string>(['violet', 'red', 'green', 'orange']);
+
+/** Every icon she can pick from, in the order the picker shows them. */
+export const ICON_CHOICES = [...ICON_NAMES] as IconName[];
+export const ACCENT_CHOICES = [...ACCENTS] as Accent[];
+
+/**
+ * A stored value that is not one of ours is ignored rather than rendered.
+ * A typo in the database should not be able to blank an icon or break a class.
+ */
+export function withOverride(d: Domain, o?: DomainOverride | null): Domain {
+  if (!o) return d;
+  return {
+    ...d,
+    label: o.name?.trim() ? o.name.trim() : d.label,
+    icon: o.icon && ICON_NAMES.has(o.icon) ? (o.icon as IconName) : d.icon,
+    accent: o.accent && ACCENTS.has(o.accent) ? (o.accent as Accent) : d.accent,
+  };
+}
+
+export function overrideMap(rows: DomainOverride[]): Record<string, DomainOverride> {
+  return Object.fromEntries(rows.map((r) => [r.slug, r]));
+}
+
 export function domainHref(domain: Domain, tab?: string): string {
   const t = tab ?? defaultTab(domain).slug;
   return `/d/${domain.slug}/${t}`;

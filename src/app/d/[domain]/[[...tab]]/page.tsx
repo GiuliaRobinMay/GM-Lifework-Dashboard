@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation';
 // Read on every request. The client table writes, and a page built once at
 // deploy time would keep showing the row where it used to be.
 export const dynamic = 'force-dynamic';
-import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
+import { DOMAIN_BY_SLUG, findTab, withOverride, overrideMap } from '@/lib/nav';
 import { renderZone } from '@/components/views';
 import { loadAll } from '@/lib/data/bundle';
+import { getDomainSettings } from '@/lib/data';
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string; tab?: string[] }> }) {
   const { domain: slug, tab } = await params;
@@ -30,13 +31,16 @@ export default async function DomainPage({
 }) {
   const { domain: slug, tab } = await params;
   const { q = '' } = await searchParams;
-  const domain = DOMAIN_BY_SLUG.get(slug);
-  if (!domain) notFound();
+  const base = DOMAIN_BY_SLUG.get(slug);
+  if (!base) notFound();
 
   // An unknown tab falls back to the first one rather than 404ing — a stale
   // bookmark should land you somewhere useful, not on an error.
-  const active = findTab(domain, tab?.[0]);
-  const bundle = await loadAll();
+  const active = findTab(base, tab?.[0]);
+  const [bundle, { rows: settings }] = await Promise.all([loadAll(), getDomainSettings()]);
+  // A recolour has to reach the zone as well, or the widgets inside it would
+  // keep the old accent while the chrome around them changed.
+  const domain = withOverride(base, overrideMap(settings)[base.slug]);
 
   return (
     <>

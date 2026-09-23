@@ -3,7 +3,8 @@
 import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon, SearchIcon } from '@/components/Icon';
-import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
+import { DOMAIN_BY_SLUG, findTab, withOverride, type DomainOverride } from '@/lib/nav';
+import { DomainSettings } from '@/components/DomainSettings';
 import { Tabs } from '@/components/Tabs';
 import { ClientsBar } from '@/components/ClientsBar';
 import { ZoneSearch } from '@/components/ZoneSearch';
@@ -25,22 +26,30 @@ const SEARCHABLE = new Set(['clients', 'upwork']);
  * Nothing in row three is drawn unless it does something. A toolbar of
  * buttons that do not work is worse than a short toolbar.
  */
-export function Topbar({ pins }: { pins: Pin[] }) {
+export function Topbar({ pins, overrides = {} }: { pins: Pin[]; overrides?: Record<string, DomainOverride> }) {
   const pathname = usePathname();
   const parts = pathname.split('/');
-  const domain = pathname.startsWith('/d/') ? DOMAIN_BY_SLUG.get(parts[2]) : undefined;
+  const base = pathname.startsWith('/d/') ? DOMAIN_BY_SLUG.get(parts[2]) : undefined;
+  const domain = base ? withOverride(base, overrides[base.slug]) : undefined;
 
   if (domain) {
     const tab = findTab(domain, parts[3]);
     const isClients = domain.slug === 'clients';
     return (
       <header className={`chrome accent-${domain.accent}`}>
+        {/* Left, the domain. Middle, where you are inside it — the tab now,
+            and whatever sits under a tab later. Right, its settings. */}
         <div className="chrome__top">
-          <span className="chrome__mark"><Icon name={domain.icon} /></span>
-          <span className="chrome__name">{domain.label}</span>
-          <Caret />
-          <div className="chrome__spacer" />
-          <PinRail pins={pins} />
+          <div className="chrome__id">
+            <span className="chrome__mark"><Icon name={domain.icon} /></span>
+            <span className="chrome__name">{domain.label}</span>
+            <Caret />
+          </div>
+          <div className="chrome__where">{tab.label}</div>
+          <div className="chrome__actions">
+            <PinRail pins={pins} />
+            <DomainSettings domain={domain} />
+          </div>
         </div>
 
         <div className="chrome__tabs">

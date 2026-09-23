@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/Icon';
-import { DOMAINS, GROUP_ORDER, domainHref, type DomainGroup } from '@/lib/nav';
+import { DOMAINS, GROUP_ORDER, domainHref, withOverride, type DomainGroup, type DomainOverride } from '@/lib/nav';
 
 /**
  * The left rail: where you are.
@@ -12,7 +12,10 @@ import { DOMAINS, GROUP_ORDER, domainHref, type DomainGroup } from '@/lib/nav';
  * and then your hand knows it. Counts ride on the right where they exist;
  * a dot means "this wants you" without claiming a number it cannot back up.
  */
-export function Sidebar({ counts }: { counts: Record<string, number> }) {
+export function Sidebar({ counts, overrides = {} }: {
+  counts: Record<string, number>;
+  overrides?: Record<string, DomainOverride>;
+}) {
   const pathname = usePathname();
 
   return (
@@ -39,7 +42,8 @@ export function Sidebar({ counts }: { counts: Record<string, number> }) {
         {GROUP_ORDER.map((group: DomainGroup) => (
           <div className="sidebar__group" key={group}>
             <p className="eyebrow">{group}</p>
-            {DOMAINS.filter((d) => d.group === group).map((d) => {
+            {DOMAINS.filter((b) => b.group === group).map((base) => {
+              const d = withOverride(base, overrides[base.slug]);
               const active = pathname.startsWith(`/d/${d.slug}`);
               const count = counts[d.slug] ?? 0;
               return (

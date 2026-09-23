@@ -16,6 +16,7 @@ import type {
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
 import type { Company, Contact, ClientApp } from '@/lib/crm';
+import type { DomainOverride } from '@/lib/nav';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 import { localRows } from '@/lib/data/local';
 
@@ -52,6 +53,11 @@ export const getClientApps = () =>
 // Upwork. Imported from the freelancer account, read-only here — the zone
 // never calls Upwork at render time. No seed: an empty list is the honest
 // answer before the import has been run.
+// What she has renamed or recoloured. No seed: an empty list means every
+// domain still looks the way nav.ts defines it, which is the honest default.
+export const getDomainSettings = () =>
+  readTable<DomainOverride>('domain_settings_api', []);
+
 export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
 export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);
 
