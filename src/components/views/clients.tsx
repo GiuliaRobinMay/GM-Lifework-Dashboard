@@ -7,7 +7,7 @@ import {
   STATUS_LABEL, PHASE_LABEL, fullName, contactsFor, appsFor, companyLinks, platformOf,
 } from '@/lib/crm';
 import { Widget, Rows, Row, Empty, Badge, SourceNote } from '@/components/ui';
-import { Zone, Portal } from '@/components/views/shared';
+import { Portal } from '@/components/views/shared';
 import { ClientTable } from '@/components/ClientTable';
 
 /**
@@ -30,13 +30,7 @@ function listView(_domain: Domain, _tab: Tab, b: Bundle, q: string): ReactNode {
     <Portal
       note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}
     >
-      {b.companies.length === 0 ? (
-        <Empty>No clients in the database yet.</Empty>
-      ) : (
-        <section className="card ctable__wrap">
-          <ClientTable companies={b.companies} contacts={b.contacts} q={q} />
-        </section>
-      )}
+      <ClientTable companies={b.companies} contacts={b.contacts} q={q} />
     </Portal>
   );
 }
@@ -148,16 +142,10 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 // ---------------------------------------------------------- not connected
 
-function notConnected(domain: Domain, tab: Tab, b: Bundle): ReactNode {
+function notConnected(_domain: Domain, _tab: Tab, b: Bundle): ReactNode {
   return (
-    <Zone domain={domain} tab={tab} b={b}>
-      <section className="card" style={{ padding: 24 }}>
-        <p className="section-title">No clients to show</p>
-        <p className="muted" style={{ marginTop: 8, lineHeight: 1.65, maxWidth: 620 }}>
-          The database is reachable but returned nothing, or the connection is not
-          configured. The note above this card says which.
-        </p>
-      </section>
-    </Zone>
+    <Portal note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}>
+      <ClientTable companies={[]} contacts={[]} />
+    </Portal>
   );
 }

@@ -1253,6 +1253,46 @@ button.row {
 .grid2__num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid2__empty { color: var(--muted); font-style: italic; }
 
+/* A fold: one heading row across the whole width, with its count. */
+.grid2__fold td {
+  background: var(--grid-canvas);
+  padding: 0;
+  border-right: 0;
+}
+.grid2__foldbtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--grid-row);
+  padding: 0 8px 0 18px;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-align: left;
+}
+.grid2__caret { width: 10px; color: var(--faint); font-size: 10px; }
+.grid2__count {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An action column: buttons only, so the header carries no field name. */
+.grid2__bare { text-align: center; padding: 0; }
+.grid2__bare .iconbtn { vertical-align: middle; }
+
+/* The primary field reads as the link it is. */
+.grid2__name { color: var(--ink); font-weight: 500; text-decoration: none; }
+.grid2__name:hover { text-decoration: underline; }
+.grid2__more { margin-left: 6px; font-size: 12px; color: var(--faint); }
+.grid2__error { margin-left: 6px; font-size: 12px; color: var(--brand-orange); }
+
+/* The status select sits flush in its cell, no box of its own. */
+.grid2__table td .status--select { max-width: 100%; }
+
 /* the drag edge, reusing the client table's handle */
 .grid2__table th .ctable__grip:hover { background: rgba(0, 0, 0, .12); }
 

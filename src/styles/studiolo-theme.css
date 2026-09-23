@@ -79,10 +79,17 @@ body {
 
 ::selection { background: color-mix(in srgb, var(--brand-violet) 22%, white); }
 
+/* Keyboard focus.
+   A grey button, not a coloured halo: the ring hugs the element on its own
+   radius and the fill deepens a step, so a focused row reads as pressed
+   rather than ringed. */
 :focus-visible {
-  outline: 2px solid var(--brand-violet);
-  outline-offset: 2px;
+  outline: 1px solid var(--ghost);
+  outline-offset: 0;
+  border-radius: var(--radius-control);
 }
+.sidebar__item:focus-visible,
+.sidebar__item--active:focus-visible { background: var(--grey-100); }
 
 /* --------------------------------------------------------------------------
    Type

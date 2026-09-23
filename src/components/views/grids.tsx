@@ -1,0 +1,255 @@
+'use client';
+
+import type { ReactNode } from 'react';
+import type { Bundle } from '@/lib/data/bundle';
+import type {
+  Task, AppLink, BrainSource, VoiceRule, ContentItem, Course, GoalPeriod, Signal,
+} from '@/lib/types';
+import { ROOTS } from '@/lib/types';
+import { Grid, type Column } from '@/components/Grid';
+import { shortDate } from '@/lib/upwork';
+
+/**
+ * Every zone as a grid.
+ *
+ * One table, the same one, everywhere — the same rules, the same row height,
+ * the same type glyphs in the header. A tab that has no source yet still
+ * draws its columns and says plainly that nothing feeds them, rather than
+ * showing a widget that implies data it does not have.
+ */
+
+const dash = <span className="grid2__dash">—</span>;
+const text = (v: string | null | undefined) => (v && v.trim() ? v : dash);
+
+function chip(label: string | null, tone?: string) {
+  if (!label) return dash;
+  return tone ? <span className={`status status--${tone}`}>{label}</span> : <>{label}</>;
+}
+
+function link(url: string | null, label = 'Open ↗') {
+  return url
+    ? <a className="grid2__link" href={url} target="_blank" rel="noreferrer">{label}</a>
+    : dash;
+}
+
+// --------------------------------------------------------------- row types
+
+const TASK_COLS: Column<Task>[] = [
+  { key: 'title', label: 'Task', type: 'text', width: 340, render: (t) => t.title },
+  { key: 'for', label: 'For', type: 'text', width: 180, render: (t) => text(t.clientName ?? t.area) },
+  { key: 'status', label: 'Status', type: 'select', width: 140,
+    render: (t) => chip(t.status.replace('_', ' '), t.status === 'done' ? 'done' : 'active') },
+  { key: 'priority', label: 'Priority', type: 'select', width: 120,
+    render: (t) => chip(t.priority, t.priority === 'urgent' || t.priority === 'high' ? 'contact' : undefined) },
+  { key: 'due', label: 'Due', type: 'date', width: 130, render: (t) => shortDate(t.dueDate ?? t.doDate) },
+];
+
+const APP_COLS: Column<AppLink>[] = [
+  { key: 'name', label: 'App', type: 'text', width: 240, render: (a) => a.name },
+  { key: 'note', label: 'What for', type: 'text', width: 300, render: (a) => text(a.note) },
+  { key: 'category', label: 'Category', type: 'select', width: 190, render: (a) => text(a.category) },
+  { key: 'connected', label: 'Wired to the brain', type: 'check', width: 170,
+    render: (a) => (a.connected ? <span className="status status--active">Yes</span> : dash) },
+  { key: 'open', label: 'Open', type: 'link', width: 110, render: (a) => link(a.url) },
+];
+
+const SOURCE_COLS: Column<BrainSource>[] = [
+  { key: 'name', label: 'Source', type: 'text', width: 240, render: (s) => s.name },
+  { key: 'kind', label: 'Kind', type: 'select', width: 120, render: (s) => s.kind },
+  { key: 'state', label: 'State', type: 'select', width: 160,
+    render: (s) => chip(
+      s.state === 'needs_auth' ? 'needs authorising' : s.state,
+      s.state === 'connected' ? 'active' : s.state === 'needs_auth' ? 'done' : 'sleeping',
+    ) },
+  { key: 'reach', label: 'Reach', type: 'text', width: 300, render: (s) => text(s.reach) },
+  { key: 'feeds', label: 'Feeds', type: 'text', width: 220, render: (s) => text(s.feeds.join(', ')) },
+];
+
+const VOICE_COLS: Column<VoiceRule>[] = [
+  { key: 'title', label: 'Rule', type: 'text', width: 300, render: (r) => r.title },
+  { key: 'kind', label: 'Kind', type: 'select', width: 140, render: (r) => r.kind },
+  { key: 'detail', label: 'What it means', type: 'text', width: 520, render: (r) => text(r.detail) },
+];
+
+const CONTENT_COLS: Column<ContentItem>[] = [
+  { key: 'title', label: 'Title', type: 'text', width: 340, render: (c) => c.title },
+  { key: 'channel', label: 'Channel', type: 'select', width: 140, render: (c) => c.channel },
+  { key: 'state', label: 'State', type: 'select', width: 140,
+    render: (c) => chip(c.state, c.state === 'published' ? 'done' : c.state === 'review' ? 'contact' : 'active') },
+  { key: 'when', label: 'Scheduled', type: 'date', width: 140, render: (c) => shortDate(c.scheduledFor) },
+  { key: 'campaign', label: 'Campaign', type: 'text', width: 200, render: (c) => text(c.campaign) },
+];
+
+const COURSE_COLS: Column<Course>[] = [
+  { key: 'title', label: 'Course', type: 'text', width: 300, render: (c) => c.title },
+  { key: 'provider', label: 'Provider', type: 'text', width: 180, render: (c) => text(c.provider) },
+  { key: 'progress', label: 'Lessons', type: 'number', width: 120, numeric: true,
+    render: (c) => `${c.lessonsDone}/${c.lessonsTotal}` },
+  { key: 'state', label: 'State', type: 'select', width: 130,
+    render: (c) => chip(c.state.replace('_', ' '), c.state === 'done' ? 'done' : c.state === 'studying' ? 'active' : 'sleeping') },
+  { key: 'next', label: 'Next lesson', type: 'text', width: 280, render: (c) => text(c.nextLesson) },
+  { key: 'open', label: 'Open', type: 'link', width: 110, render: (c) => link(c.url) },
+];
+
+const GOAL_COLS: Column<GoalPeriod>[] = [
+  { key: 'title', label: 'Theme', type: 'text', width: 340, render: (g) => g.title },
+  { key: 'tier', label: 'Period', type: 'select', width: 130, render: (g) => g.tier },
+  { key: 'from', label: 'From', type: 'date', width: 130, render: (g) => shortDate(g.periodStart) },
+  { key: 'to', label: 'To', type: 'date', width: 130, render: (g) => shortDate(g.periodEnd) },
+  { key: 'progress', label: 'Progress', type: 'number', width: 120, numeric: true,
+    render: (g) => (g.progress === null ? dash : `${Math.round(g.progress * 100)}%`) },
+];
+
+const SIGNAL_COLS: Column<Signal>[] = [
+  { key: 'title', label: 'Signal', type: 'text', width: 300, render: (s) => s.title },
+  { key: 'detail', label: 'Detail', type: 'text', width: 420, render: (s) => text(s.detail) },
+  { key: 'kind', label: 'Kind', type: 'select', width: 140, render: (s) => s.kind },
+];
+
+type RootsRow = (typeof ROOTS)[number];
+const ROOTS_COLS: Column<RootsRow>[] = [
+  { key: 'letter', label: 'Letter', type: 'text', width: 100, render: (r) => r.letter },
+  { key: 'name', label: 'Pillar', type: 'text', width: 300, render: (r) => r.name },
+  { key: 'blurb', label: 'What it covers', type: 'text', width: 520, render: (r) => r.blurb },
+];
+
+// ------------------------------------------------------------- not wired yet
+
+/**
+ * A tab with no source behind it.
+ *
+ * It draws the columns it will have and says what is missing. An empty grid
+ * that names its fields is a promise; a widget full of nothing is a lie.
+ */
+function pending(labels: string[], what: string, store: string): ReactNode {
+  const columns: Column<never>[] = labels.map((label, i) => ({
+    key: `c${i}`,
+    label,
+    type: i === 0 ? 'text' : 'select',
+    width: i === 0 ? 300 : 180,
+    render: () => dash,
+  }));
+  return <Grid rows={[]} columns={columns} rowKey={() => ''} store={store} empty={what} />;
+}
+
+// ------------------------------------------------------------------ the map
+
+/**
+ * The grid for one tab.
+ *
+ * Takes slugs rather than the nav objects: the grid runs in the browser, so
+ * only plain data crosses to it.
+ */
+export function ZoneGrid({ domain, tab, blurb, b }: {
+  domain: string;
+  tab: string;
+  blurb: string;
+  b: Bundle;
+}): ReactNode {
+  const store = `lifework.${domain}.${tab}.cols`;
+  // The open work of this domain. Inlined rather than imported from the data
+  // barrel: that module reads the disk, and this grid runs in the browser.
+  const mine = b.tasks.filter((t) => t.status !== 'done' && t.domain === domain);
+  const work = (empty: string) => (
+    <Grid rows={mine} columns={TASK_COLS} rowKey={(t) => t.id} store={store} empty={empty} />
+  );
+
+  switch (`${domain}/${tab}`) {
+    // ------------------------------------------------------------ the brain
+    case 'brain/voice':
+    case 'content/voice':
+      return <Grid rows={b.voiceRules} columns={VOICE_COLS} rowKey={(r) => r.id} store={store}
+        empty="No voice rules recorded." />;
+    case 'brain/method':
+      return <Grid rows={[...ROOTS]} columns={ROOTS_COLS} rowKey={(r) => r.key} store={store}
+        empty="No method recorded." />;
+    case 'brain/sources':
+      return <Grid rows={b.brainSources} columns={SOURCE_COLS} rowKey={(s) => s.id} store={store}
+        empty="No sources recorded." />;
+    case 'brain/library':
+      return <Grid rows={b.brainSources.filter((s) => s.kind === 'corpus' || s.kind === 'graph')}
+        columns={SOURCE_COLS} rowKey={(s) => s.id} store={store}
+        empty="Nothing in the library yet." />;
+    case 'brain/prompts':
+      return pending(['Prompt', 'Runs on', 'Last used'],
+        'Saved prompts are not stored anywhere yet.', store);
+
+    // ------------------------------------------------------------- content
+    case 'content/today':
+      return <Grid rows={b.content.filter((c) => c.state === 'review' || c.state === 'scheduled')}
+        columns={CONTENT_COLS} rowKey={(c) => c.id} store={store}
+        empty="Nothing waiting on you today." />;
+    case 'content/pipeline':
+      return <Grid rows={b.content.filter((c) => c.state !== 'published')}
+        columns={CONTENT_COLS} rowKey={(c) => c.id} store={store}
+        empty="The pipeline is empty." />;
+    case 'content/channels':
+      return <Grid rows={b.content} columns={CONTENT_COLS} rowKey={(c) => c.id} store={store}
+        empty="No posts recorded." />;
+    case 'content/campaigns':
+      return <Grid rows={b.content.filter((c) => c.campaign)}
+        columns={CONTENT_COLS} rowKey={(c) => c.id} store={store}
+        empty="Nothing is tied to a campaign." />;
+
+    // ---------------------------------------------------------------- apps
+    case 'apps/live':
+      return <Grid rows={b.apps} columns={APP_COLS} rowKey={(a) => a.id} store={store}
+        empty="Nothing recorded." />;
+    case 'apps/building':
+      return work('Nothing in flight.');
+    case 'apps/incidents':
+      return pending(['What broke', 'App', 'Since', 'State'],
+        'Incidents are not tracked anywhere yet.', store);
+    case 'apps/workers':
+      return pending(['Worker', 'Building', 'Waiting on', 'Last seen'],
+        'The workers are not reporting into this yet.', store);
+
+    // --------------------------------------------------------------- life
+    case 'studying/next':
+      return <Grid rows={b.courses.filter((c) => c.state === 'studying')}
+        columns={COURSE_COLS} rowKey={(c) => c.id} store={store}
+        empty="Nothing in progress." />;
+    case 'studying/courses':
+      return <Grid rows={b.courses} columns={COURSE_COLS} rowKey={(c) => c.id} store={store}
+        empty="No courses recorded." />;
+    case 'studying/notes':
+      return pending(['Note', 'Course', 'Taken'], 'Notes are not stored here yet.', store);
+    case 'studying/apply':
+      return work('Nothing from a course has turned into work yet.');
+
+    case 'fitness/week':
+      return work('Nothing planned.');
+    case 'fitness/plan':
+      return pending(['Session', 'Day', 'Duration'], 'The routine is not recorded here yet.', store);
+    case 'fitness/trend':
+      return <Grid rows={b.goals.filter((g) => g.tier === 'week')} columns={GOAL_COLS}
+        rowKey={(g) => g.id} store={store} empty="No weeks recorded." />;
+
+    case 'accountancy/overview':
+      return <Grid rows={b.goals} columns={GOAL_COLS} rowKey={(g) => g.id} store={store}
+        empty="Nothing recorded." />;
+    case 'accountancy/invoices':
+    case 'accountancy/expenses':
+    case 'accountancy/vat':
+      return pending(['What', 'Amount', 'Due', 'State'],
+        'Money is not read from anywhere yet. Your Upwork earnings live under Upwork.', store);
+
+    // ------------------------------------------------------------ ventures
+    case 'big-tribe-builders/roots':
+      return <Grid rows={[...ROOTS]} columns={ROOTS_COLS} rowKey={(r) => r.key} store={store}
+        empty="No method recorded." />;
+    case 'big-tribe-builders/pulse':
+    case 'quinb-academy/pulse':
+      return <Grid rows={b.signals.filter((s) => s.domain === domain)}
+        columns={SIGNAL_COLS} rowKey={(s) => s.id} store={store}
+        empty="Nothing moved that needs you." />;
+    case 'giulia-may/list':
+      return <Grid rows={b.brainSources.filter((s) => s.feeds.includes('giulia-may'))}
+        columns={SOURCE_COLS} rowKey={(s) => s.id} store={store}
+        empty="No audience source connected." />;
+
+    default:
+      // Every remaining tab has open work behind it and nothing else yet.
+      return work(`Nothing open here. ${blurb}`);
+  }
+}

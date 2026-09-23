@@ -24,21 +24,58 @@ export type Column<T> = {
   width: number;
   /** Right-aligns the cell. Numbers and money read down the column. */
   numeric?: boolean;
+  /** A column of buttons: no field glyph, no name, no resize edge. */
+  bare?: boolean;
   render: (row: T) => ReactNode;
 };
 
-export function Grid<T>({
-  rows, columns, rowKey, store, empty = 'Nothing here.',
-}: {
+/** A fold: a run of rows behind one heading you can close. */
+export type Group<T> = {
+  key: string;
+  head: ReactNode;
   rows: T[];
+  open: boolean;
+  onToggle: () => void;
+  empty?: string;
+};
+
+export function Grid<T>({
+  rows = [], columns, rowKey, store, empty = 'Nothing here.', groups, rowClass,
+}: {
+  rows?: T[];
   columns: Column<T>[];
   rowKey: (row: T) => string;
   /** Where this grid's column widths are remembered, per browser. */
   store: string;
   empty?: string;
+  /** Folds. When given they replace `rows`, and rows number within a fold. */
+  groups?: Group<T>[];
+  rowClass?: (row: T) => string | undefined;
 }) {
   const { widths, resize } = useColumnWidths(store, columns.map((c) => c.width));
   const total = widths.reduce((a, b) => a + b, 0);
+
+  /** The rows of one run — the whole table, or one fold of it. */
+  function body(list: T[], none: string) {
+    if (list.length === 0) {
+      return <tr><td colSpan={columns.length + 1} className="grid2__empty">{none}</td></tr>;
+    }
+    return list.map((row, n) => (
+      <tr key={rowKey(row)} className={rowClass?.(row)}>
+        {columns.map((c, i) => (
+          <td
+            key={c.key}
+            className={[c.numeric ? 'grid2__num' : '', c.bare ? 'grid2__bare' : '']
+              .filter(Boolean).join(' ') || undefined}
+          >
+            {i === 0 ? <span className="grid2__rownum">{n + 1}</span> : null}
+            {c.render(row)}
+          </td>
+        ))}
+        <td className="grid2__filler" />
+      </tr>
+    ));
+  }
 
   return (
     <div className="grid2">
@@ -54,33 +91,39 @@ export function Grid<T>({
           <thead>
             <tr>
               {columns.map((c, i) => (
-                <th key={c.key} className={c.numeric ? 'grid2__num' : undefined}>
+                <th
+                  key={c.key}
+                  className={[c.numeric ? 'grid2__num' : '', c.bare ? 'grid2__bare' : '']
+                    .filter(Boolean).join(' ') || undefined}
+                  aria-label={c.bare ? c.label : undefined}
+                >
                   {i === 0 ? <span className="grid2__check" aria-hidden="true" /> : null}
-                  <span className="grid2__field">
-                    <FieldIcon type={c.type} />
-                    <span className="grid2__fieldname">{c.label}</span>
-                  </span>
-                  <ResizeHandle onResize={(dx) => resize(i, widths[i] + dx)} />
+                  {c.bare ? null : (
+                    <span className="grid2__field">
+                      <FieldIcon type={c.type} />
+                      <span className="grid2__fieldname">{c.label}</span>
+                    </span>
+                  )}
+                  {c.bare ? null : <ResizeHandle onResize={(dx) => resize(i, widths[i] + dx)} />}
                 </th>
               ))}
               <th className="grid2__filler" aria-hidden="true" />
             </tr>
           </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={columns.length + 1} className="grid2__empty">{empty}</td></tr>
-            ) : rows.map((row, n) => (
-              <tr key={rowKey(row)}>
-                {columns.map((c, i) => (
-                  <td key={c.key} className={c.numeric ? 'grid2__num' : undefined}>
-                    {i === 0 ? <span className="grid2__rownum">{n + 1}</span> : null}
-                    {c.render(row)}
-                  </td>
-                ))}
-                <td className="grid2__filler" />
+          {groups ? groups.map((g) => (
+            <tbody key={g.key} className="grid2__group">
+              <tr className="grid2__fold">
+                <td colSpan={columns.length + 1}>
+                  <button type="button" className="grid2__foldbtn" aria-expanded={g.open} onClick={g.onToggle}>
+                    <span className="grid2__caret" aria-hidden="true">{g.open ? '\u25be' : '\u25b8'}</span>
+                    {g.head}
+                    <span className="grid2__count">{g.rows.length}</span>
+                  </button>
+                </td>
               </tr>
-            ))}
-          </tbody>
+              {g.open ? body(g.rows, g.empty ?? empty) : null}
+            </tbody>
+          )) : <tbody>{body(rows, empty)}</tbody>}
         </table>
       </div>
     </div>

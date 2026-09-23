@@ -1,40 +1,34 @@
 import type { ReactNode } from 'react';
 import type { Domain, Tab } from '@/lib/nav';
 import type { Bundle } from '@/lib/data/bundle';
-import { appsForDomain } from '@/lib/data';
-import { byStatus, appsFor } from '@/lib/crm';
-import { Zone, WorkWidget, AppsWidget, NotWired } from '@/components/views/shared';
+import { SourceNote } from '@/components/ui';
+import { Portal } from '@/components/views/shared';
+import { ZoneGrid } from '@/components/views/grids';
 
 import { clientsZone } from '@/components/views/clients';
-import { brainZone } from '@/components/views/brain';
-import { contentZone } from '@/components/views/content';
-import { appsZone } from '@/components/views/apps';
-import { lifeZone } from '@/components/views/life';
-import { ventureZone } from '@/components/views/ventures';
 import { upworkZone } from '@/components/views/upwork';
 
 /**
  * The view registry.
  *
- * One function per domain family. Each takes the domain, the active tab and
- * the shared bundle, and returns the body under the tab strip. Adding a zone
- * is a config entry plus a case — never a new route.
+ * Every zone is the same grid under the same chrome. Clients and Upwork have
+ * their own because they write back; everything else is columns over the
+ * bundle, and a tab with no source yet still draws its columns.
  */
 export function renderZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNode {
   switch (domain.slug) {
     case 'clients': return clientsZone(domain, tab, b, q);
-    case 'brain': return brainZone(domain, tab, b);
-    case 'content': return contentZone(domain, tab, b);
-    case 'apps': return appsZone(domain, tab, b);
     case 'upwork': return upworkZone(domain, tab, b, q);
-    case 'studying':
-    case 'fitness':
-    case 'accountancy': return lifeZone(domain, tab, b);
-    case 'big-tribe-builders':
-    case 'quinb-academy':
-    case 'giulia-may': return ventureZone(domain, tab, b);
-    default: return genericZone(domain, tab, b);
+    default: return gridZone(domain, tab, b);
   }
+}
+
+function gridZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
+  return (
+    <Portal note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}>
+      <ZoneGrid domain={domain.slug} tab={tab.slug} blurb={tab.blurb} b={b} />
+    </Portal>
+  );
 }
 
 /** Counts on the tab strip. Only where the number is honest. */
@@ -61,20 +55,4 @@ export function zoneCounts(domain: Domain, b: Bundle): Record<string, number> {
     default:
       return {};
   }
-}
-
-function genericZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
-  const apps = appsForDomain(b.apps, domain.slug);
-  return (
-    <Zone domain={domain} tab={tab} b={b}>
-      <NotWired
-        what={`${domain.label} — ${tab.label} is not wired to a live source yet`}
-        how="Its open work and links are real. The rest arrives when this domain's source is connected — see Settings."
-      />
-      <section className="grid">
-        <div className="col-7"><WorkWidget domain={domain} b={b} /></div>
-        {apps.length > 0 ? <div className="col-5"><AppsWidget domain={domain} b={b} /></div> : null}
-      </section>
-    </Zone>
-  );
 }
