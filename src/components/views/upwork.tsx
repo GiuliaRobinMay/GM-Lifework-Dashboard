@@ -4,7 +4,7 @@ import type { Bundle } from '@/lib/data/bundle';
 import { clientsOnly } from '@/lib/upwork';
 import { Empty, SourceNote } from '@/components/ui';
 import { Portal, SideReserved } from '@/components/views/shared';
-import { MessagesTable, UpworkClientsTable } from '@/components/UpworkTables';
+import { MessagesGrid, UpworkClientsGrid } from '@/components/UpworkTables';
 
 /**
  * Upwork.
@@ -17,18 +17,18 @@ import { MessagesTable, UpworkClientsTable } from '@/components/UpworkTables';
  * to a contract, with what they paid — contracts and money are columns on the
  * client, not places of their own. Proposals is the third.
  */
-export function upworkZone(domain: Domain, tab: Tab, b: Bundle): ReactNode {
+export function upworkZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNode {
   return (
     <Portal
       note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}
       side={<SideReserved zone="Upwork" />}
     >
-      {body(tab, b)}
+      {body(tab, b, q)}
     </Portal>
   );
 }
 
-function body(tab: Tab, b: Bundle): ReactNode {
+function body(tab: Tab, b: Bundle, q: string): ReactNode {
   if (b.upworkLeads.length === 0) {
     return <Empty>Nothing imported from Upwork yet.</Empty>;
   }
@@ -37,7 +37,7 @@ function body(tab: Tab, b: Bundle): ReactNode {
     case 'clients': {
       const clients = clientsOnly(b.upworkLeads);
       if (clients.length === 0) return <Empty>No conversation has become a contract yet.</Empty>;
-      return <UpworkClientsTable leads={b.upworkLeads} invoices={b.upworkInvoices} />;
+      return <UpworkClientsGrid leads={b.upworkLeads} invoices={b.upworkInvoices} q={q} />;
     }
 
     case 'proposals':
@@ -45,7 +45,7 @@ function body(tab: Tab, b: Bundle): ReactNode {
 
     case 'messages':
     default:
-      return <MessagesTable leads={b.upworkLeads} />;
+      return <MessagesGrid leads={b.upworkLeads} q={q} />;
   }
 }
 

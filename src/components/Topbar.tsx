@@ -6,15 +6,24 @@ import { Icon, SearchIcon } from '@/components/Icon';
 import { DOMAIN_BY_SLUG, findTab } from '@/lib/nav';
 import { Tabs } from '@/components/Tabs';
 import { ClientsBar } from '@/components/ClientsBar';
+import { ZoneSearch } from '@/components/ZoneSearch';
 
 type Pin = { id: string; name: string; url: string };
 
+/** Zones whose body is a table the toolbar search can filter. */
+const SEARCHABLE = new Set(['clients', 'upwork']);
+
 /**
- * The top bar.
+ * The chrome above a zone, three rows, after Airtable.
  *
- * Inside a domain it is a band in the domain's colour, two rows: the icon,
- * the name in the middle and search on the first; the tabs on the second.
- * Outside a domain it is the plain bar: where you are, and the palette.
+ *   1. Identity — the mark, the name. White, 56px.
+ *   2. Tabs — edge to edge, tinted with the domain's colour. 32px. The active
+ *      tab is white and flush to the bottom, so it merges into row three.
+ *   3. Toolbar — the view you are in, and the controls that act on it. 44px,
+ *      white, one hairline under it. The grid starts immediately below.
+ *
+ * Nothing in row three is drawn unless it does something. A toolbar of
+ * buttons that do not work is worse than a short toolbar.
  */
 export function Topbar({ pins }: { pins: Pin[] }) {
   const pathname = usePathname();
@@ -22,28 +31,43 @@ export function Topbar({ pins }: { pins: Pin[] }) {
   const domain = pathname.startsWith('/d/') ? DOMAIN_BY_SLUG.get(parts[2]) : undefined;
 
   if (domain) {
-    const activeTab = findTab(domain, parts[3]).slug;
+    const tab = findTab(domain, parts[3]);
     const isClients = domain.slug === 'clients';
     return (
-      <header className={`topbar topbar--band accent-${domain.accent}`}>
-        <div className="band__top">
-          <span className="topbar__icon"><Icon name={domain.icon} /></span>
-          <span className="topbar__title">{domain.label}</span>
-          <div className="band__right">
-            {isClients
-              ? <Suspense fallback={null}><ClientsBar part="search" /></Suspense>
-              : null}
-          </div>
+      <header className={`chrome accent-${domain.accent}`}>
+        <div className="chrome__top">
+          <span className="chrome__mark"><Icon name={domain.icon} /></span>
+          <span className="chrome__name">{domain.label}</span>
+          <Caret />
+          <div className="chrome__spacer" />
+          <PinRail pins={pins} />
         </div>
-        <div className="band__tabs">
-          <span className="band__list" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+
+        <div className="chrome__tabs">
+          <Tabs domain={domain} active={tab.slug} />
+        </div>
+
+        <div className="chrome__tool">
+          <span className="chrome__burger" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" />
+            </svg>
           </span>
-          <Tabs domain={domain} active={activeTab} />
-          <div className="topbar__spacer" />
-          {isClients
-            ? <Suspense fallback={null}><ClientsBar part="add" /></Suspense>
-            : <PinRail pins={pins} />}
+          <span className="chrome__viewicon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+              <path d="M1.5 6h13M6 6v7.5" />
+            </svg>
+          </span>
+          <span className="chrome__view">{tab.label}</span>
+          <Caret />
+          <div className="chrome__spacer" />
+          {SEARCHABLE.has(domain.slug) ? (
+            <Suspense fallback={null}>
+              <ZoneSearch placeholder={`Search ${tab.label.toLowerCase()}`} />
+            </Suspense>
+          ) : null}
+          {isClients ? <Suspense fallback={null}><ClientsBar part="add" /></Suspense> : null}
         </div>
       </header>
     );
@@ -62,6 +86,16 @@ export function Topbar({ pins }: { pins: Pin[] }) {
       <PinRail pins={pins} />
       <PaletteButton />
     </header>
+  );
+}
+
+/** The small chevron Airtable puts after a name you can act on. */
+function Caret() {
+  return (
+    <svg className="caret" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m4.5 6.5 3.5 3.5 3.5-3.5" />
+    </svg>
   );
 }
 

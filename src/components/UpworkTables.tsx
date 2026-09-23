@@ -1,133 +1,77 @@
 'use client';
 
-import { useState } from 'react';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 import {
   byActivity, clientsOnly, moneyFor, money, shortDate,
   CONTRACT_LABEL, CONTRACT_TONE, ROOM_LABEL,
 } from '@/lib/upwork';
-import { useColumnWidths, ResizeHandle } from '@/components/table';
+import { Grid, type Column } from '@/components/Grid';
 
 /**
- * The two Upwork tables.
+ * The two Upwork grids.
  *
- * Same ruled grid as the client table, in the Upwork violet. Both filter
- * from one search box rather than a control per column — with four hundred
- * conversations, typing a name is faster than any filter menu.
+ * Both are the same grid with a different column spec. Filtering comes from
+ * the toolbar search as a URL parameter, so there is no control inside the
+ * table itself — Airtable keeps the table surface for data only.
  */
 
-// ------------------------------------------------------------------ search
+const dash = <span className="grid2__dash">—</span>;
 
-function Search({ value, onChange, placeholder }: {
-  value: string; onChange: (v: string) => void; placeholder: string;
-}) {
-  return (
-    <label className="clientsearch">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="round" />
-      </svg>
-      <input
-        type="search"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </label>
-  );
-}
-
-function Count({ shown, total, noun }: { shown: number; total: number; noun: string }) {
-  return (
-    <p className="muted tablecount">
-      {shown === total ? `${total} ${noun}` : `${shown} of ${total} ${noun}`}
-    </p>
-  );
+function openCell(url: string | null) {
+  return url
+    ? <a className="grid2__link" href={url} target="_blank" rel="noreferrer">Open ↗</a>
+    : dash;
 }
 
 // ---------------------------------------------------------------- messages
 
-const MSG_COLS = ['Name', 'Type', 'Last message', 'Awaiting reply', 'Became a client', ''] as const;
-const MSG_WIDTHS = [300, 100, 150, 140, 150, 90];
-
-export function MessagesTable({ leads }: { leads: UpworkLead[] }) {
-  const [q, setQ] = useState('');
-  const { widths, resize } = useColumnWidths('lifework.upwork.messages.cols', MSG_WIDTHS);
-
+export function MessagesGrid({ leads, q = '' }: { leads: UpworkLead[]; q?: string }) {
   const needle = q.trim().toLowerCase();
   const rows = byActivity(leads).filter((l) => !needle || l.name.toLowerCase().includes(needle));
 
+  const columns: Column<UpworkLead>[] = [
+    { key: 'name', label: 'Name', type: 'text', width: 280, render: (l) => l.name },
+    { key: 'type', label: 'Type', type: 'select', width: 110,
+      render: (l) => (l.roomType ? (ROOM_LABEL[l.roomType] ?? l.roomType) : dash) },
+    { key: 'last', label: 'Last message', type: 'date', width: 150,
+      render: (l) => shortDate(l.lastActivityAt) },
+    { key: 'client', label: 'Became a client', type: 'check', width: 150,
+      render: (l) => (l.contractId ? <span className="status status--active">Yes</span> : dash) },
+    { key: 'open', label: 'Conversation', type: 'link', width: 130,
+      render: (l) => openCell(l.roomUrl) },
+  ];
+
   return (
-    <>
-      <div className="tablebar">
-        <Search value={q} onChange={setQ} placeholder="Search conversations" />
-        <Count shown={rows.length} total={leads.length} noun="conversations" />
-      </div>
-      <section className="card ctable__wrap">
-        <table className="ctable ctable--violet" style={{ width: widths.reduce((a, b) => a + b, 0) }}>
-          <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
-          <thead>
-            <tr>
-              {MSG_COLS.map((label, i) => (
-                <th key={i} aria-label={label || 'Open in Upwork'}>
-                  {label}
-                  <ResizeHandle onResize={(dx) => resize(i, widths[i] + dx)} />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={MSG_COLS.length} className="ctable__empty">No match.</td></tr>
-            ) : rows.map((l) => (
-              <tr key={l.id} className="ctable__row">
-                <td title={l.name}>{l.name}</td>
-                <td>{l.roomType ? (ROOM_LABEL[l.roomType] ?? l.roomType) : <span className="muted">—</span>}</td>
-                <td>{shortDate(l.lastActivityAt)}</td>
-                <td>
-                  {l.awaitingReply
-                    ? <span className="muted">{l.awaitingReply === 'you' ? 'You' : 'Them'}</span>
-                    : <span className="muted">—</span>}
-                </td>
-                <td>
-                  {l.contractId
-                    ? <span className="status status--active">Yes</span>
-                    : <span className="muted">No</span>}
-                </td>
-                <td>
-                  {l.roomUrl
-                    ? <a className="ctable__link" href={l.roomUrl} target="_blank" rel="noreferrer">Open ↗</a>
-                    : <span className="muted">—</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </>
+    <Grid
+      rows={rows}
+      columns={columns}
+      rowKey={(l) => l.id}
+      store="lifework.upwork.messages.cols"
+      empty="No conversation matches."
+    />
   );
 }
 
 // ----------------------------------------------------------------- clients
 
-const CLI_COLS = ['Client', 'Contract', 'Signed', 'Status', 'Invoiced', 'Earned', ''] as const;
-const CLI_WIDTHS = [230, 280, 115, 105, 125, 125, 85];
-
-export function UpworkClientsTable({ leads, invoices }: {
+export function UpworkClientsGrid({ leads, invoices, q = '' }: {
   leads: UpworkLead[];
   invoices: UpworkInvoice[];
+  q?: string;
 }) {
-  const [q, setQ] = useState('');
-  const { widths, resize } = useColumnWidths('lifework.upwork.clients.cols', CLI_WIDTHS);
+  type Row = { lead: UpworkLead; billed: number; earned: number };
 
-  const all = clientsOnly(leads)
+  const all: Row[] = clientsOnly(leads)
     .map((l) => {
       const m = moneyFor(invoices, l.id);
       // The invoice rows are the record. When none carry this room — a
       // contract that never billed, or one Upwork bills under another name —
       // the total stored on the lead is what there is.
-      const billed = m.years > 0 ? m.billed : Number(l.billedTotal);
-      const earned = m.years > 0 ? m.earned : Number(l.earnedTotal);
-      return { lead: l, billed, earned };
+      return {
+        lead: l,
+        billed: m.years > 0 ? m.billed : Number(l.billedTotal),
+        earned: m.years > 0 ? m.earned : Number(l.earnedTotal),
+      };
     })
     .sort((a, b) => b.earned - a.earned);
 
@@ -137,71 +81,33 @@ export function UpworkClientsTable({ leads, invoices }: {
     || lead.name.toLowerCase().includes(needle)
     || (lead.contractTitle ?? '').toLowerCase().includes(needle));
 
-  const totalBilled = rows.reduce((s, r) => s + r.billed, 0);
-  const totalEarned = rows.reduce((s, r) => s + r.earned, 0);
+  const columns: Column<Row>[] = [
+    { key: 'name', label: 'Client', type: 'text', width: 240, render: (r) => r.lead.name },
+    { key: 'contract', label: 'Contract', type: 'text', width: 280,
+      render: (r) => r.lead.contractTitle ?? dash },
+    { key: 'signed', label: 'Signed', type: 'date', width: 130,
+      render: (r) => shortDate(r.lead.firstContactAt) },
+    { key: 'state', label: 'Status', type: 'select', width: 120,
+      render: (r) => (r.lead.contractStatus ? (
+        <span className={`status status--${CONTRACT_TONE[r.lead.contractStatus] ?? 'archived'}`}>
+          {CONTRACT_LABEL[r.lead.contractStatus] ?? r.lead.contractStatus}
+        </span>
+      ) : dash) },
+    { key: 'billed', label: 'Invoiced', type: 'currency', width: 130, numeric: true,
+      render: (r) => money(r.billed, r.lead.rateCurrency) },
+    { key: 'earned', label: 'Earned', type: 'currency', width: 130, numeric: true,
+      render: (r) => money(r.earned, r.lead.rateCurrency) },
+    { key: 'open', label: 'Conversation', type: 'link', width: 130,
+      render: (r) => openCell(r.lead.roomUrl) },
+  ];
 
   return (
-    <>
-      <div className="tablebar">
-        <Search value={q} onChange={setQ} placeholder="Search clients" />
-        <Count shown={rows.length} total={all.length} noun="clients" />
-      </div>
-      <section className="card ctable__wrap">
-        <table className="ctable ctable--violet" style={{ width: widths.reduce((a, b) => a + b, 0) }}>
-          <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
-          <thead>
-            <tr>
-              {CLI_COLS.map((label, i) => (
-                <th
-                  key={i}
-                  aria-label={label || 'Open in Upwork'}
-                  className={i === 4 || i === 5 ? 'ctable__num' : undefined}
-                >
-                  {label}
-                  <ResizeHandle onResize={(dx) => resize(i, widths[i] + dx)} />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={CLI_COLS.length} className="ctable__empty">No match.</td></tr>
-            ) : rows.map(({ lead: l, billed, earned }) => (
-              <tr key={l.id} className="ctable__row">
-                <td title={l.name}>{l.name}</td>
-                <td title={l.contractTitle ?? ''}>
-                  {l.contractTitle ?? <span className="muted">—</span>}
-                </td>
-                <td>{shortDate(l.firstContactAt)}</td>
-                <td>
-                  {l.contractStatus ? (
-                    <span className={`status status--${CONTRACT_TONE[l.contractStatus] ?? 'archived'}`}>
-                      {CONTRACT_LABEL[l.contractStatus] ?? l.contractStatus}
-                    </span>
-                  ) : <span className="muted">—</span>}
-                </td>
-                <td className="ctable__num">{money(billed, l.rateCurrency)}</td>
-                <td className="ctable__num">{money(earned, l.rateCurrency)}</td>
-                <td>
-                  {l.roomUrl
-                    ? <a className="ctable__link" href={l.roomUrl} target="_blank" rel="noreferrer">Open ↗</a>
-                    : <span className="muted">—</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          {rows.length > 0 ? (
-            <tfoot>
-              <tr className="ctable__total">
-                <td colSpan={4}>{needle ? 'Total, these rows' : 'Total, all time'}</td>
-                <td className="ctable__num">{money(totalBilled)}</td>
-                <td className="ctable__num">{money(totalEarned)}</td>
-                <td />
-              </tr>
-            </tfoot>
-          ) : null}
-        </table>
-      </section>
-    </>
+    <Grid
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.lead.id}
+      store="lifework.upwork.clients.cols"
+      empty="No client matches."
+    />
   );
 }

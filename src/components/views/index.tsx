@@ -26,7 +26,7 @@ export function renderZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNo
     case 'brain': return brainZone(domain, tab, b);
     case 'content': return contentZone(domain, tab, b);
     case 'apps': return appsZone(domain, tab, b);
-    case 'upwork': return upworkZone(domain, tab, b);
+    case 'upwork': return upworkZone(domain, tab, b, q);
     case 'studying':
     case 'fitness':
     case 'accountancy': return lifeZone(domain, tab, b);

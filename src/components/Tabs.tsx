@@ -4,20 +4,15 @@ import Link from 'next/link';
 import type { Domain } from '@/lib/nav';
 
 /**
- * The tab strip: what you are looking at.
+ * The tab strip.
  *
- * Drawn by the top bar, on the same line as the domain's icon and name, so
- * the band at the top is one thing. Never more than five tabs. Moving between
- * zones of one domain is a single click and never changes the left rail.
+ * Airtable's table tabs: the strip is tinted with the base's colour and runs
+ * the full width; the active tab is white, square-shouldered at the bottom
+ * and flush to it, so it reads as continuous with the toolbar below.
  */
-export function Tabs({
-  domain, active,
-}: {
-  domain: Domain;
-  active: string;
-}) {
+export function Tabs({ domain, active }: { domain: Domain; active: string }) {
   return (
-    <nav className={`tabs accent-${domain.accent}`} aria-label={`${domain.label} sections`}>
+    <nav className="tabs" aria-label={`${domain.label} sections`}>
       {domain.tabs.map((t) => {
         const isActive = t.slug === active;
         return (

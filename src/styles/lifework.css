@@ -153,48 +153,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   Tab strip — the horizontal move between zones of one domain.
-   Sits directly under the top bar. There is no third level below it.
-   -------------------------------------------------------------------------- */
-
-.tabs {
-  display: flex;
-  align-items: flex-end;
-  align-self: flex-end;
-  gap: 3px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-
-.tabs__item {
-  display: inline-flex;
-  align-items: center;
-  height: 29px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 0;
-  background: rgba(0, 0, 0, .18);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, .92);
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 150ms, color 150ms;
-}
-.tabs__item:hover { background: rgba(0, 0, 0, .26); color: #fff; }
-
-/* The active tab is the page colour lifting out of the band. */
-.tabs__item--active,
-.tabs__item--active:hover {
-  background: var(--surface, #fff);
-  color: var(--ink);
-  font-weight: 600;
-}
-
-/* --------------------------------------------------------------------------
    Page head
    -------------------------------------------------------------------------- */
 
@@ -604,15 +562,6 @@ button.row {
 }
 .ctable th:last-child { border-right: 0; }
 
-/* Upwork's header is dark grey, not violet: the band above is already violet,
-   and two purples stacked is one too many. Square, because a rounded header
-   on a ruled grid reads as a card pretending to be a table. */
-.ctable--violet th {
-  background: var(--table-head);
-  border-bottom-color: var(--table-head-deep);
-  border-right-color: rgba(255, 255, 255, .22);
-}
-
 /* money and counts read down the column, so they align right */
 .ctable__num { text-align: right; font-variant-numeric: tabular-nums; }
 
@@ -625,50 +574,54 @@ button.row {
 }
 
 /* --------------------------------------------------------------------------
-   Portal view — the table left, a side banner right.
+   Portal view — the grid left, a side banner right.
 
-   Two thirds work, one third banner. The left column carries min-width: 0 so
-   a wide table scrolls inside it rather than pushing the banner off the page.
-   Padding is one gutter on every side, so the gap above the table matches the
-   gap beside it and the whole thing sits in the same frame as the band.
+   No padding anywhere on the left: the grid starts at the top left corner of
+   the page, directly under the toolbar hairline, and its first line runs the
+   whole width of the column. The banner is divided off by one vertical line,
+   the same weight as a column border, and sticks as the grid scrolls.
    -------------------------------------------------------------------------- */
 
 .portal {
   width: 100%;
   max-width: none;
-  padding: var(--gutter);
-  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 
 .portal__split {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: var(--gutter);
-  align-items: start;
+  gap: 0;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
-/* min-width: 0 is what makes the table clip instead of shoving the banner. */
-.portal__main { min-width: 0; }
-.portal__main > * + * { margin-top: var(--gutter); }
+/* min-width: 0 is what makes the grid clip instead of shoving the banner. */
+.portal__main { min-width: 0; background: var(--grid-canvas); }
 
 .portal__side {
-  position: sticky;
-  top: calc(var(--band-h) + var(--gutter));
   min-width: 0;
+  border-left: 1px solid var(--grid-line);
+  background: var(--surface);
+  padding: 14px;
 }
 
-/* A note about the page, not the table — full width, above both columns. */
-.portal > .notice,
-.portal > .notice + .portal__split { margin-top: 0; }
-.portal > .notice { margin-bottom: var(--gutter); }
+/* A note about the page, not the grid — full width, above both columns. */
+.portal > .notice { margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
 
 /* Narrow screens stack: the banner is context, so it goes under the work. */
 @media (max-width: 1100px) {
   .portal__split { grid-template-columns: 1fr; }
-  .portal__side { position: static; }
+  .portal__side { border-left: 0; border-top: 1px solid var(--grid-line); }
 }
 
-.sidepanel { padding: 16px; border-radius: 0; }
+.sidepanel { padding: 0; border: 0; border-radius: 0; background: none; }
 .sidepanel__title {
   font-size: 12px;
   font-weight: 700;
@@ -683,17 +636,7 @@ button.row {
   color: var(--muted);
 }
 
-/* Square the table card: the header row is the top edge, and it is a grid. */
-.ctable__wrap { border-radius: 0; }
 
-/* the line above a table: search on the left, the count on the right */
-.tablebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.tablecount { font-size: 13px; }
 
 /* the drag edge */
 .ctable__grip {
@@ -898,102 +841,165 @@ button.row {
    tab strip continues it. One block of colour, title and search inside it.
    -------------------------------------------------------------------------- */
 
-:root { --table-head: #343a46; --table-head-deep: #22262f; --gutter: 14px; --band-top: 38px; --band-tabs: 32px; --band-h: calc(var(--band-top) + var(--band-tabs)); }
+/* --------------------------------------------------------------------------
+   Chrome — the three rows above a zone, after Airtable.
 
-.topbar--band {
+     1. identity   56px, white
+     2. tabs       32px, tinted with the domain colour, edge to edge
+     3. toolbar    44px, white, one hairline under it
+
+   The grid begins on the next pixel. Measurements are taken from the
+   reference screenshots, which were captured at 125%: what reads as 40px
+   there is 32px here.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --chrome-top: 56px;
+  --chrome-tabs: 32px;
+  --chrome-tool: 44px;
+  --chrome-h: calc(var(--chrome-top) + var(--chrome-tabs) + var(--chrome-tool));
+
+  /* the grid. Three weights: columns, rows, and the rule under the header. */
+  --grid-line: #e4e4e4;
+  --grid-line-strong: #d9d9d9;
+  --grid-row: 32px;
+  --grid-canvas: #f6f8fc;
+  --grid-head-ink: #616670;
+
+  --table-head: #343a46;
+  --table-head-deep: #22262f;
+  --gutter: 14px;
+  --band-h: var(--chrome-h);
+}
+
+.chrome {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0;
-  padding: 0;
-  background: var(--accent, var(--brand-violet));
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
   border-bottom: 0;
   backdrop-filter: none;
-  color: #fff;
 }
 
-/* row 1: icon | name in the middle | search */
-.band__top {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  height: var(--band-top);
-  padding: 0 16px 0 var(--gutter);
-}
-.band__top .topbar__title { text-align: center; font-size: 15px; }
-.band__right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+/* ---------------------------------------------------------------- row 1 */
 
-/* row 2: list icon, the tabs, then whatever lives on the right */
-.band__tabs {
+.chrome__top {
   display: flex;
-  align-items: flex-end;
-  height: var(--band-tabs);
-  padding: 0 16px 0 var(--gutter);
+  align-items: center;
+  gap: 8px;
+  height: var(--chrome-top);
+  padding: 0 14px;
+  background: var(--surface);
 }
-.band__list {
+
+/* the mark: a rounded square in the domain's colour, white glyph inside */
+.chrome__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: var(--band-tabs);
-  margin-right: var(--gutter);
-  color: rgba(255, 255, 255, .85);
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--accent, var(--brand-violet));
+  color: #fff;
 }
-.band__list svg { width: 16px; height: 16px; }
-.band__tabs .pinrail,
-.band__tabs .btn { align-self: center; margin-bottom: 2px; }
+.chrome__mark svg { width: 18px; height: 18px; stroke-width: 1.9; }
 
-.topbar--band .topbar__title { color: #fff; }
-.topbar__icon {
+.chrome__name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.chrome__spacer { flex: 1; }
+
+.caret { width: 16px; height: 16px; flex: none; color: var(--muted); }
+
+/* ---------------------------------------------------------------- row 2 */
+
+/* Edge to edge: the tint runs the full width with nothing inset from it. */
+.chrome__tabs {
+  height: var(--chrome-tabs);
+  background: color-mix(in srgb, var(--accent, var(--brand-violet)) 14%, white);
+  padding: 0;
+}
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  gap: 0;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tabs__item {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, .18);
-  color: #fff;
-  margin-right: 2px;
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  color: color-mix(in srgb, var(--accent, var(--brand-violet)) 26%, #14161c);
 }
-.topbar__icon svg { width: 15px; height: 15px; }
-.topbar--band .topbar__crumbs { align-items: center; }
+.tabs__item:hover { background: rgba(255, 255, 255, .45); }
 
-.topbar--band .searchbtn,
-.topbar--band .clientsearch {
-  background: rgba(255, 255, 255, .16);
-  border-color: rgba(255, 255, 255, .28);
-  color: rgba(255, 255, 255, .9);
+/* The active tab is white and flush to the bottom, so it runs into the
+   toolbar below and the two read as one surface. */
+.tabs__item--active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  border-radius: 4px 4px 0 0;
+  box-shadow: inset 0 1px 0 #d2d2d2, inset 1px 0 0 #e6e6e6, inset -1px 0 0 #e6e6e6;
 }
-.topbar--band .searchbtn:hover,
-.topbar--band .clientsearch:focus-within { border-color: rgba(255, 255, 255, .7); }
-.topbar--band .clientsearch input { color: #fff; }
-.topbar--band .clientsearch input::placeholder { color: rgba(255, 255, 255, .75); }
-.topbar--band .clientsearch svg { color: rgba(255, 255, 255, .8); }
-.topbar--band .kbd {
-  background: rgba(255, 255, 255, .18);
-  border-color: rgba(255, 255, 255, .3);
-  color: #fff;
-}
-.topbar--band .pin {
-  background: rgba(255, 255, 255, .14);
-  border-color: rgba(255, 255, 255, .28);
-  color: #fff;
-}
-.topbar--band .pin:hover { background: rgba(255, 255, 255, .24); border-color: rgba(255, 255, 255, .6); }
-.topbar--band .pin .dot { background: #fff; }
-.topbar--band .btn--primary { background: #fff; color: var(--accent, var(--brand-violet)); }
-.topbar--band .btn--primary:hover:not(:disabled) { background: rgba(255, 255, 255, .9); }
+.tabs__item--active:hover { background: var(--surface); }
 
-/* compact controls inside the band */
-.topbar--band .searchbtn,
-.topbar--band .clientsearch { width: 220px; height: 28px; padding: 0 10px; font-size: 13px; }
-.topbar--band .clientsearch input { padding: 0; }
-.topbar--band .pin { padding: 3px 9px 3px 6px; font-size: 12px; }
-.topbar--band .btn { padding: 5px 11px; font-size: 13px; }
-.band__tabs .pinrail,
-.band__tabs .btn { margin-bottom: 3px; }
+/* ---------------------------------------------------------------- row 3 */
+
+.chrome__tool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--chrome-tool);
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid #eaeaea;
+}
+
+.chrome__viewicon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--accent, var(--brand-violet));
+}
+.chrome__viewicon svg { width: 100%; height: 100%; }
+
+.chrome__view {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chrome__tool .clientsearch { height: 28px; width: 220px; }
+.chrome__tool .btn { padding: 5px 11px; font-size: 13px; }
 
 /* --------------------------------------------------------------------------
+
    Sidebar brand block — blackboard dark, white type. The navigation below it
    stays light.
    -------------------------------------------------------------------------- */
@@ -1005,3 +1011,128 @@ button.row {
 }
 .sidebar__wordmark { color: #fff; }
 .sidebar__brand .muted { color: rgba(255, 255, 255, .62); }
+
+/* --------------------------------------------------------------------------
+   Grid — the Airtable data grid.
+
+   No fills. Everything is carried by three line weights: the columns, the
+   rows, and the heavier rule under the header. The header is white like the
+   cells; what separates it is the type glyph, the smaller grey name, and
+   that rule. Rows are 32px, flush to the top left of the page.
+   -------------------------------------------------------------------------- */
+
+.grid2 {
+  background: var(--grid-canvas);
+  min-height: 100%;
+}
+
+.grid2__scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: auto;
+  scrollbar-color: #c3c6cd var(--grid-canvas);
+}
+.grid2__scroll::-webkit-scrollbar { height: 12px; }
+.grid2__scroll::-webkit-scrollbar-track { background: var(--grid-canvas); }
+.grid2__scroll::-webkit-scrollbar-thumb {
+  background: #c3c6cd;
+  border-radius: 6px;
+  border: 3px solid var(--grid-canvas);
+}
+.grid2__scroll::-webkit-scrollbar-thumb:hover { background: #9aa0aa; }
+
+.grid2__table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.grid2__table th,
+.grid2__table td {
+  height: var(--grid-row);
+  padding: 0 8px;
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the header: white, grey type, one heavier rule under the whole row */
+.grid2__table th {
+  position: relative;
+  background: var(--surface);
+  border-bottom: 1px solid var(--grid-line-strong);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--grid-head-ink);
+}
+
+.grid2__field { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.grid2__ficon { width: 14px; height: 14px; flex: none; color: #8a8f99; }
+.grid2__fieldname { overflow: hidden; text-overflow: ellipsis; }
+
+/* the record number, folded into the left of the first cell */
+.grid2__rownum {
+  display: inline-block;
+  width: 26px;
+  margin-right: 10px;
+  text-align: right;
+  font-size: 12px;
+  color: #9aa0aa;
+  font-variant-numeric: tabular-nums;
+}
+.grid2__table th:first-child { padding-left: 44px; }
+
+.grid2__table tbody tr:hover td { background: #f8f9fb; }
+
+.grid2__num { text-align: right; font-variant-numeric: tabular-nums; }
+.grid2__empty { color: var(--muted); font-style: italic; }
+
+/* the drag edge, reusing the client table's handle */
+.grid2__table th .ctable__grip:hover { background: rgba(0, 0, 0, .12); }
+
+/* The portal is a <main>, so it inherits .content's centring and padding from
+   Studiolo. A zone that runs edge to edge has to opt out of both. */
+main.portal {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* The trailing cell: no side border of its own, so the row and header rules
+   carry on to the page edge the way they do in the reference. */
+.grid2__filler { border-right: 0 !important; padding: 0 !important; }
+.grid2__table { width: 100%; }
+
+/* the header checkbox, in the first field cell where the record number sits */
+.grid2__check {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #c3c6cd;
+  border-radius: 3px;
+}
+
+.grid2__dash { color: #b9bec6; }
+.grid2__link { color: inherit; text-decoration: none; }
+.grid2__link:hover { text-decoration: underline; }
+
+/* the hamburger Airtable puts at the left of the toolbar row */
+.chrome__burger {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-right: 4px;
+  color: var(--muted);
+}
+.chrome__burger svg { width: 100%; height: 100%; }
