@@ -868,6 +868,9 @@ button.row {
   --grid-canvas: #f6f8fc;
   --grid-head-ink: #616670;
 
+  /* the sidebar corner block: dark, but grey rather than black */
+  --brand-block: #242a36;
+
   --table-head: #343a46;
   --table-head-deep: #22262f;
   --gutter: 14px;
@@ -899,20 +902,18 @@ button.row {
   color: #fff;
 }
 
-/* the mark: on a coloured bar the tile is the white one and the glyph
-   carries the colour, so it still reads as a logo rather than a hole */
+/* the mark: no tile and no frame — the glyph sits straight on the banner */
 .chrome__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex: none;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--accent, var(--brand-violet));
+  background: none;
+  color: #fff;
 }
-.chrome__mark svg { width: 18px; height: 18px; stroke-width: 1.9; }
+.chrome__mark svg { width: 22px; height: 22px; stroke-width: 1.8; }
 
 .chrome__name {
   font-size: 17px;
@@ -1022,8 +1023,12 @@ button.row {
    -------------------------------------------------------------------------- */
 
 .sidebar__brand {
-  background: #1b1d23;
-  border-bottom-color: #1b1d23;
+  background: var(--brand-block);
+  /* The sidebar's own right hairline would otherwise run down between this
+     block and the coloured banner beside it. A child's shadow paints over a
+     parent's border, so one pixel of the same grey closes the seam. */
+  box-shadow: 1px 0 0 0 var(--brand-block);
+  border-bottom-color: var(--brand-block);
   color: #fff;
 }
 .sidebar__wordmark { color: #fff; }
