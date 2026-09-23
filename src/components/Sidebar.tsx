@@ -1,31 +1,67 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/Icon';
-import { DOMAINS, GROUP_ORDER, domainHref, withOverride, type DomainGroup, type DomainOverride } from '@/lib/nav';
+import { NavMenu } from '@/components/NavMenu';
+import {
+  GROUP_ORDER, domainHref, resolveNav,
+  type DomainOverride, type CollectionOrder,
+} from '@/lib/nav';
+
+const TIGHT = 'lifework.rail.tight';
 
 /**
  * The left rail: where you are.
  *
- * Stable order, five groups, never reordered by activity. You learn it once
- * and then your hand knows it. Counts ride on the right where they exist;
- * a dot means "this wants you" without claiming a number it cannot back up.
+ * Stable order, never reordered by activity — but hers to arrange. The three
+ * dots on a collection or a space move it; nothing moves on its own.
+ *
+ * Collapsed, the rail is icons only. The choice is kept in this browser, so
+ * the rail opens the way she left it.
  */
-export function Sidebar({ counts, overrides = {} }: {
+export function Sidebar({ counts, overrides = {}, collections = [] }: {
   counts: Record<string, number>;
   overrides?: Record<string, DomainOverride>;
+  collections?: CollectionOrder[];
 }) {
   const pathname = usePathname();
+  const [tight, setTight] = useState(false);
+
+  useEffect(() => {
+    try { setTight(localStorage.getItem(TIGHT) === '1'); } catch { /* private mode */ }
+  }, []);
+
+  function toggle() {
+    setTight((t) => {
+      try { localStorage.setItem(TIGHT, t ? '0' : '1'); } catch { /* private mode */ }
+      return !t;
+    });
+  }
+
+  const sections = resolveNav(overrides, collections);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${tight ? ' sidebar--tight' : ''}`}>
       <div className="sidebar__brand">
         <span className="sidebar__mark">GM</span>
-        <div>
+        <div className="sidebar__brandtext">
           <div className="sidebar__wordmark">Lifework</div>
           <div className="muted" style={{ fontSize: 11.5 }}>Giulia May</div>
         </div>
+        <button
+          type="button"
+          className="sidebar__toggle"
+          onClick={toggle}
+          aria-label={tight ? 'Expand the navigation' : 'Collapse the navigation'}
+          title={tight ? 'Expand' : 'Collapse'}
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={tight ? 'm6 3.5 4.5 4.5L6 12.5' : 'M10 3.5 5.5 8l4.5 4.5'} />
+          </svg>
+        </button>
       </div>
 
       <nav className="sidebar__scroll" aria-label="Primary">
@@ -33,29 +69,46 @@ export function Sidebar({ counts, overrides = {} }: {
           <Link
             href="/"
             className={`sidebar__item${pathname === '/' ? ' sidebar__item--active' : ''}`}
+            title={tight ? 'Command Center' : undefined}
           >
             <span className="icon-chip icon-chip--sm accent-violet"><Icon name="home" /></span>
-            Command Center
+            <span className="sidebar__label">Command Center</span>
           </Link>
         </div>
 
-        {GROUP_ORDER.map((group: DomainGroup) => (
-          <div className="sidebar__group" key={group}>
-            <p className="eyebrow">{group}</p>
-            {DOMAINS.filter((b) => b.group === group).map((base) => {
-              const d = withOverride(base, overrides[base.slug]);
+        {sections.map((section, si) => (
+          <div className="sidebar__group" key={section.group}>
+            <p className="eyebrow eyebrow--row">
+              <span>{section.group}</span>
+              <NavMenu
+                kind="collection"
+                name={section.group}
+                canUp={si > 0}
+                canDown={si < sections.length - 1}
+              />
+            </p>
+            {section.domains.map((d, di) => {
               const active = pathname.startsWith(`/d/${d.slug}`);
               const count = counts[d.slug] ?? 0;
               return (
-                <Link
-                  key={d.slug}
-                  href={domainHref(d)}
-                  className={`sidebar__item${active ? ' sidebar__item--active' : ''}`}
-                >
-                  <span className={`icon-chip icon-chip--sm accent-${d.accent}`}><Icon name={d.icon} /></span>
-                  {d.label}
-                  {count > 0 ? <span className="sidebar__count">{count}</span> : null}
-                </Link>
+                <div className="sidebar__row" key={d.slug}>
+                  <Link
+                    href={domainHref(d)}
+                    className={`sidebar__item${active ? ' sidebar__item--active' : ''}`}
+                    title={tight ? d.label : undefined}
+                  >
+                    <span className={`icon-chip icon-chip--sm accent-${d.accent}`}><Icon name={d.icon} /></span>
+                    <span className="sidebar__label">{d.label}</span>
+                    {count > 0 ? <span className="sidebar__count">{count}</span> : null}
+                  </Link>
+                  <NavMenu
+                    kind="space"
+                    name={d.slug}
+                    canUp={di > 0}
+                    canDown={di < section.domains.length - 1}
+                    groups={GROUP_ORDER.map((g) => ({ label: g, current: g === section.group }))}
+                  />
+                </div>
               );
             })}
           </div>
@@ -66,16 +119,18 @@ export function Sidebar({ counts, overrides = {} }: {
         <Link
           href="/launchpad"
           className={`sidebar__item${pathname.startsWith('/launchpad') ? ' sidebar__item--active' : ''}`}
+          title={tight ? 'Launchpad' : undefined}
         >
           <span className="icon-chip icon-chip--sm accent-orange"><Icon name="grid" /></span>
-          Launchpad
+          <span className="sidebar__label">Launchpad</span>
         </Link>
         <Link
           href="/settings"
           className={`sidebar__item${pathname.startsWith('/settings') ? ' sidebar__item--active' : ''}`}
+          title={tight ? 'Settings' : undefined}
         >
           <span className="icon-chip icon-chip--sm accent-green"><Icon name="settings" /></span>
-          Settings
+          <span className="sidebar__label">Settings</span>
         </Link>
       </div>
     </aside>

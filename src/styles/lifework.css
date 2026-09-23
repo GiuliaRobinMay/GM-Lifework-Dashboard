@@ -576,6 +576,101 @@ button.row {
 }
 
 /* --------------------------------------------------------------------------
+   Portal view — the grid, edge to edge.
+
+   No padding, no column beside it. Every rule in the grid runs the whole
+   width of the page, from the navigation to the right edge.
+   -------------------------------------------------------------------------- */
+
+.portal {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+/* min-width: 0 is what makes the grid clip instead of widening the page. */
+.portal__main { min-width: 0; background: var(--grid-canvas); flex: 1; }
+
+/* A note about the page, not the grid — full width, square, above it. */
+.portal > .notice { margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
+
+/* --------------------------------------------------------------------------
+   Client table — ruled, grouped by status, folds per group.
+   Every cell has a line on all sides: this is scanned, not read.
+   -------------------------------------------------------------------------- */
+
+/* The table scrolls sideways inside its column rather than widening the page.
+   The scrollbar is forced visible: an overlay bar that only appears on hover
+   is a scrollbar you do not know is there. */
+.ctable__wrap {
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: auto;
+  scrollbar-color: var(--faint) var(--grey-100);
+}
+.ctable__wrap::-webkit-scrollbar { height: 12px; }
+.ctable__wrap::-webkit-scrollbar-track { background: var(--grey-100); }
+.ctable__wrap::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 6px;
+  border: 3px solid var(--grey-100);
+}
+.ctable__wrap::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+.ctable {
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+  min-width: 100%;
+}
+.ctable th,
+.ctable td {
+  border: 0;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ctable th:last-child,
+.ctable td:last-child { border-right: 0; }
+.ctable tbody:last-child tr:last-child td { border-bottom: 0; }
+
+/* header — the Clients orange, solid, white type */
+.ctable th {
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--brand-orange);
+  border-right-color: rgba(255, 255, 255, .35);
+  border-bottom-color: var(--brand-orange-deep);
+}
+.ctable th:last-child { border-right: 0; }
+
+/* money and counts read down the column, so they align right */
+.ctable__num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* the one summed row, at the foot where a total belongs */
+.ctable__total td {
+  background: var(--grey-50);
+  font-weight: 700;
+  border-top: 2px solid var(--hairline);
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
    Portal view — the grid left, a side banner right.
 
    No padding anywhere on the left: the grid starts at the top left corner of
@@ -623,20 +718,6 @@ button.row {
   .portal__side { border-left: 0; border-top: 1px solid var(--grid-line); }
 }
 
-.sidepanel { padding: 0; border: 0; border-radius: 0; background: none; }
-.sidepanel__title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.sidepanel__body {
-  margin-top: 8px;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--muted);
-}
 
 
 
@@ -1014,12 +1095,34 @@ button.row {
   color: var(--ink);
   font-weight: 600;
   border-radius: 0;
-  box-shadow:
-    0 -3px 7px -1px rgba(10, 12, 18, .30),
-    -5px 0 7px -3px rgba(10, 12, 18, .30),
-    5px 0 7px -3px rgba(10, 12, 18, .30);
+  /* The top edge only. The two sides are gradients below, because a
+     box-shadow and a gradient do not fall off the same way, and side by side
+     down one line the difference reads as one of them being darker. */
+  box-shadow: 0 -4px 9px -4px rgba(10, 12, 18, .14);
 }
-.tabs__item--active:hover { background: var(--surface); }
+
+/* the tab's left and right edges, with exactly the profile the long edge
+   below them uses — same width, same stops */
+.tabs__item--active::before,
+.tabs__item--active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  pointer-events: none;
+}
+.tabs__item--active::before {
+  left: -14px;
+  background: linear-gradient(to right, rgba(10, 12, 18, 0), rgba(10, 12, 18, .10));
+}
+.tabs__item--active::after {
+  right: -14px;
+  background: linear-gradient(to left, rgba(10, 12, 18, 0), rgba(10, 12, 18, .10));
+}
+/* Hovering the active tab used to take the strip's white type with it, on a
+   white tab. It takes the domain's colour instead. */
+.tabs__item--active:hover { background: var(--surface); color: var(--accent, var(--brand-violet)); }
 
 /* ---------------------------------------------------------------- row 3 */
 
@@ -1214,15 +1317,18 @@ main.portal {
   z-index: 2;
 }
 
-/* down the left, from the top of the tab to the bottom of the page */
+/* Down the left, starting at the toolbar rather than at the tab strip. The
+   tab row's own left edge belongs to the tab, which carries its own shadow;
+   running the gradient up there too laid one on top of the other and made
+   that stretch visibly darker than the rest of the line. */
 .shell__main::before {
   content: '';
   position: absolute;
   left: -14px;
   width: 14px;
-  top: var(--chrome-top);
+  top: calc(var(--chrome-top) + var(--chrome-tabs));
   bottom: 0;
-  background: linear-gradient(to right, rgba(10, 12, 18, 0), rgba(10, 12, 18, .19));
+  background: linear-gradient(to right, rgba(10, 12, 18, 0), rgba(10, 12, 18, .10));
   pointer-events: none;
   z-index: 30;
 }
@@ -1237,7 +1343,7 @@ main.portal {
   right: 0;
   top: -11px;
   height: 11px;
-  background: linear-gradient(to bottom, rgba(10, 12, 18, 0), rgba(10, 12, 18, .22));
+  background: linear-gradient(to bottom, rgba(10, 12, 18, 0), rgba(10, 12, 18, .12));
   pointer-events: none;
 }
 
@@ -1330,3 +1436,107 @@ main.portal {
 
 .field legend { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
 .field fieldset { border: 0; padding: 0; margin: 0; }
+
+/* --------------------------------------------------------------------------
+   Rail — the three dots, and the collapsed state.
+   -------------------------------------------------------------------------- */
+
+.sidebar__row { position: relative; display: flex; align-items: center; }
+.sidebar__row .sidebar__item { flex: 1; min-width: 0; }
+
+.eyebrow--row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+
+.navmenu { position: relative; display: inline-flex; flex: none; }
+
+/* Kept in the tree rather than conjured on hover, so it stays reachable from
+   the keyboard; it is only invisible until the row is pointed at. */
+.navmenu__dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--muted);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 120ms, background-color 120ms;
+}
+.navmenu__dots svg { width: 14px; height: 14px; fill: currentColor; }
+.sidebar__row:hover .navmenu__dots,
+.eyebrow--row:hover .navmenu__dots,
+.navmenu__dots:focus-visible,
+.navmenu__dots[aria-expanded='true'] { opacity: 1; }
+.navmenu__dots:hover { background: var(--grey-100); color: var(--ink); }
+
+.navmenu__pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 60;
+  min-width: 190px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(10, 12, 18, .18);
+}
+
+.navmenu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+.navmenu__item:hover:not(:disabled) { background: var(--grey-100); }
+.navmenu__item:disabled { color: var(--faint); cursor: default; }
+
+.navmenu__label {
+  padding: 8px 9px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.navmenu__error { padding: 6px 9px; font-size: 12px; color: var(--brand-red); }
+
+/* collapsed: the icons only, and nothing that needs width */
+.sidebar--tight { width: 68px; }
+.sidebar--tight .sidebar__label,
+.sidebar--tight .sidebar__brandtext,
+.sidebar--tight .sidebar__count,
+.sidebar--tight .eyebrow,
+.sidebar--tight .navmenu { display: none; }
+.sidebar--tight .sidebar__item { justify-content: center; padding-left: 0; padding-right: 0; }
+.sidebar--tight .sidebar__brand { padding: 0; justify-content: center; }
+.sidebar--tight .sidebar__group + .sidebar__group { margin-top: 10px; }
+
+.sidebar__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  flex: none;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+  cursor: pointer;
+}
+.sidebar__toggle:hover { background: rgba(255, 255, 255, .28); }
+.sidebar__toggle svg { width: 14px; height: 14px; }
+.sidebar--tight .sidebar__toggle { position: absolute; right: 6px; top: 16px; }
+.sidebar__brand { position: relative; }

@@ -244,7 +244,57 @@ export type DomainOverride = {
   name: string | null;
   icon: string | null;
   accent: string | null;
+  /** Which collection it sits in, when she has moved it out of its original. */
+  groupName?: string | null;
+  /** Its place inside that collection. Null means "wherever the code puts it". */
+  sortOrder?: number | null;
 };
+
+/** The order of the collections themselves. */
+export type CollectionOrder = { name: string; sortOrder: number };
+
+/** One collection and the spaces in it, in the order they should be drawn. */
+export type NavSection = { group: string; domains: Domain[] };
+
+/**
+ * The rail as it should actually be drawn.
+ *
+ * nav.ts says what exists; this applies what she has moved. Anything without
+ * a stored place keeps the order it has in the code, so a half-finished
+ * reorder never scrambles the rest.
+ */
+export function resolveNav(
+  overrides: Record<string, DomainOverride> = {},
+  collections: CollectionOrder[] = [],
+): NavSection[] {
+  const codeIndex = new Map(DOMAINS.map((d, i) => [d.slug, i]));
+  const collectionAt = new Map(collections.map((c) => [c.name, c.sortOrder]));
+
+  const sections = new Map<string, Domain[]>();
+  // Every collection the code knows keeps its heading even when emptied, so a
+  // space can always be moved back into one.
+  for (const g of GROUP_ORDER) sections.set(g, []);
+
+  for (const base of DOMAINS) {
+    const o = overrides[base.slug];
+    const group = o?.groupName && sections.has(o.groupName) ? o.groupName : base.group;
+    sections.get(group)!.push(withOverride(base, o));
+  }
+
+  const place = (d: Domain) => overrides[d.slug]?.sortOrder ?? (codeIndex.get(d.slug)! + 1000);
+
+  return [...sections.entries()]
+    .map(([group, domains]) => ({
+      group,
+      domains: domains.sort((a, b) => place(a) - place(b) || a.label.localeCompare(b.label)),
+    }))
+    .filter((s) => s.domains.length > 0)
+    .sort((a, b) => {
+      const ai = collectionAt.get(a.group) ?? (GROUP_ORDER.indexOf(a.group as DomainGroup) + 1000);
+      const bi = collectionAt.get(b.group) ?? (GROUP_ORDER.indexOf(b.group as DomainGroup) + 1000);
+      return ai - bi;
+    });
+}
 
 const ICON_NAMES = new Set<string>([
   'home', 'tribe', 'academy', 'star', 'users', 'briefcase',

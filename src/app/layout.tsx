@@ -5,7 +5,7 @@ import '@/styles/lifework.css';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 import { CommandPalette, type PaletteEntry } from '@/components/CommandPalette';
-import { getApps, getTasks, getDomainSettings, openTasks, pinnedApps } from '@/lib/data';
+import { getApps, getTasks, getDomainSettings, getCollectionOrder, openTasks, pinnedApps } from '@/lib/data';
 import { DOMAINS, overrideMap } from '@/lib/nav';
 
 export const metadata: Metadata = {
@@ -14,9 +14,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [{ rows: apps }, { rows: tasks }, { rows: domainSettings }] = await Promise.all([
-    getApps(), getTasks(), getDomainSettings(),
-  ]);
+  const [{ rows: apps }, { rows: tasks }, { rows: domainSettings }, { rows: collections }] =
+    await Promise.all([getApps(), getTasks(), getDomainSettings(), getCollectionOrder()]);
   const overrides = overrideMap(domainSettings);
 
   // Sidebar counts: open work per domain. A number the rail can stand behind.
@@ -47,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <div className="shell">
-          <Sidebar counts={counts} overrides={overrides} />
+          <Sidebar counts={counts} overrides={overrides} collections={collections} />
           <div className="shell__main">
             <Topbar pins={pins} overrides={overrides} />
             {children}

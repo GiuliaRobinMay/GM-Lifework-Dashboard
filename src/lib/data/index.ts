@@ -16,7 +16,7 @@ import type {
   ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
 import type { Company, Contact, ClientApp } from '@/lib/crm';
-import type { DomainOverride } from '@/lib/nav';
+import type { DomainOverride, CollectionOrder } from '@/lib/nav';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 import { localRows } from '@/lib/data/local';
 
@@ -57,6 +57,9 @@ export const getClientApps = () =>
 // domain still looks the way nav.ts defines it, which is the honest default.
 export const getDomainSettings = () =>
   readTable<DomainOverride>('domain_settings_api', []);
+
+export const getCollectionOrder = () =>
+  readTable<CollectionOrder>('collection_settings_api', []);
 
 export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
 export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);
