@@ -861,12 +861,13 @@ button.row {
   --chrome-tool: 44px;
   --chrome-h: calc(var(--chrome-top) + var(--chrome-tabs) + var(--chrome-tool));
 
-  /* the grid. Three weights: columns, rows, and the rule under the header. */
-  --grid-line: #e4e4e4;
-  --grid-line-strong: #d9d9d9;
+  /* One border colour everywhere: columns, rows, the rule under the header
+     and the hairline under the toolbar. No line is lighter than another. */
+  --grid-line: #d3d7de;
+  --grid-line-strong: var(--grid-line);
   --grid-row: 32px;
   --grid-canvas: #f6f8fc;
-  --grid-head-bg: #eceef2;
+  --grid-head-bg: #e3e6ec;
   --grid-head-ink: #4a4f59;
 
   /* the sidebar corner block: dark, but grey rather than black */
@@ -996,7 +997,7 @@ button.row {
   height: var(--chrome-tool);
   padding: 0 12px;
   background: var(--surface);
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid var(--grid-line);
 }
 
 .chrome__viewicon {
