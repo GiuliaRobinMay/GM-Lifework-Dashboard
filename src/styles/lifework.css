@@ -1001,11 +1001,13 @@ button.row {
 
   /* One border colour everywhere: columns, rows, the rule under the header
      and the hairline under the toolbar. No line is lighter than another. */
-  --grid-line: #d3d7de;
+  /* True greys, no hue. The earlier values leaned blue, and next to the red
+     band that cool cast read as a faint red wash on the rows. */
+  --grid-line: #d6d7d9;
   --grid-line-strong: var(--grid-line);
   --grid-row: 32px;
-  --grid-canvas: #f6f8fc;
-  --grid-head-bg: #e3e6ec;
+  --grid-canvas: #f6f7f8;
+  --grid-head-bg: #e5e6e8;
   --grid-head-ink: #4a4f59;
 
   /* the sidebar corner block: dark, but grey rather than black */
@@ -1308,7 +1310,7 @@ button.row {
 }
 .grid2__table th:first-child { padding-left: 44px; }
 
-.grid2__table tbody tr:not(.grid2__fold):hover td { background: #f8f9fb; }
+.grid2__table tbody tr:not(.grid2__fold):hover td { background: #f8f8f9; }
 
 .grid2__num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid2__empty { color: var(--muted); font-style: italic; }
@@ -1325,7 +1327,9 @@ button.row {
   gap: 8px;
   width: 100%;
   height: var(--grid-row);
-  padding: 0 8px 0 18px;
+  /* 12px edge + 24px caret + 8px gap = 44px: the group name starts exactly
+     where the app names do, with the caret over the record numbers. */
+  padding: 0 8px 0 12px;
   background: none;
   border: 0;
   font: inherit;
@@ -1333,7 +1337,7 @@ button.row {
   cursor: pointer;
   text-align: left;
 }
-.grid2__caret { width: 10px; color: var(--faint); font-size: 10px; }
+.grid2__caret { width: 24px; text-align: center; color: var(--muted); font-size: 14px; }
 .grid2__count {
   font-size: 12px;
   color: var(--muted);
@@ -1353,15 +1357,33 @@ button.row {
 /* The status select sits flush in its cell, no box of its own. */
 .grid2__table td .status--select { max-width: 100%; }
 
+/* The project status dropdown, flush in its cell like the chips. */
+.grid2__table td .stagesel {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
 /* The fold row carries its status colour, faintly, so the blocks read as
    blocks. A status with no colour of its own goes a step darker grey. */
 .grid2__fold--active td   { background: color-mix(in srgb, var(--brand-green) 13%, white); }
 .grid2__fold--contact td  { background: color-mix(in srgb, var(--brand-red) 9%, white); }
 .grid2__fold--sleeping td { background: color-mix(in srgb, var(--brand-violet) 9%, white); }
 .grid2__fold--done td     { background: color-mix(in srgb, var(--brand-orange) 13%, white); }
-.grid2__foldname { font-weight: 600; color: var(--ink); }
+.grid2__foldname {
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .05em;
+}
 .grid2__fold--archived td,
-.grid2__fold--grey td     { background: #e8ebf0; }
+.grid2__fold--grey td     { background: #e9eaec; }
 
 /* The header name is a button: click it to rename or change the glyph. */
 .grid2__fieldbtn {

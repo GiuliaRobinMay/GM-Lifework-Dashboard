@@ -2,7 +2,8 @@
 
 import { useState, type ReactNode } from 'react';
 import type { Bundle } from '@/lib/data/bundle';
-import { byClient, WORK_LABEL, type CodeProject } from '@/lib/projects';
+import { byClient, WORK_LABEL, STAGES, type CodeProject, type ProjectStage } from '@/lib/projects';
+import { getSupabase } from '@/lib/supabase';
 import type {
   Task, AppLink, BrainSource, VoiceRule, ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
@@ -107,6 +108,29 @@ const SIGNAL_COLS: Column<Signal>[] = [
   { key: 'kind', label: 'Kind', type: 'select', width: 140, render: (s) => s.kind },
 ];
 
+/**
+ * The status dropdown: Building | Live | Archived, one write per change.
+ *
+ * Her call, not a reading — which is why it is a select and not a chip. The
+ * row moves to its tab the moment she picks, and moves back if the write
+ * fails, so the grid never shows a state the database refused.
+ */
+function stageColumn(onStage: (p: CodeProject, v: ProjectStage) => void): Column<CodeProject> {
+  return {
+    key: 'stage', label: 'Status', type: 'select', width: 130,
+    render: (p) => (
+      <select
+        className="stagesel"
+        value={p.status}
+        aria-label={`Status of ${p.name}`}
+        onChange={(e) => onStage(p, e.target.value as ProjectStage)}
+      >
+        {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+      </select>
+    ),
+  };
+}
+
 const PROJECT_COLS: Column<CodeProject>[] = [
   { key: 'name', label: 'Project', type: 'text', width: 250, render: (p) => p.name },
   { key: 'session', label: 'Session', type: 'link', width: 120,
@@ -115,7 +139,7 @@ const PROJECT_COLS: Column<CodeProject>[] = [
     render: (p) => (p.repoUrl ? link(p.repoUrl, p.repo ?? p.repoUrl) : dash) },
   { key: 'live', label: 'Live', type: 'link', width: 160, render: (p) => link(p.liveUrl) },
   { key: 'host', label: 'Host', type: 'select', width: 110, render: (p) => text(p.host) },
-  { key: 'work', label: 'Status', type: 'select', width: 140,
+  { key: 'work', label: 'Work', type: 'select', width: 140,
     render: (p) => chip(
       p.sessionState === 'running' ? 'Running' : WORK_LABEL[p.workState ?? ''] ?? text(p.workState) as string,
       p.sessionState === 'running' ? 'active' : p.workState === 'need_input' ? 'contact' : p.workState === 'completed' ? 'done' : 'sleeping',
@@ -130,8 +154,14 @@ const PROJECT_COLS: Column<CodeProject>[] = [
 ];
 
 /** The projects, folded by client the way her session list groups them. */
-function ProjectsGrid({ rows, store, empty }: { rows: CodeProject[]; store: string; empty: string }) {
+function ProjectsGrid({ rows, store, empty, onStage }: {
+  rows: CodeProject[];
+  store: string;
+  empty: string;
+  onStage: (p: CodeProject, v: ProjectStage) => void;
+}) {
   const [closed, setClosed] = useState<Record<string, boolean>>({});
+  const columns = [PROJECT_COLS[0], stageColumn(onStage), ...PROJECT_COLS.slice(1)];
   const groups: Group<CodeProject>[] = byClient(rows).map(([client, list]) => ({
     key: client,
     head: <span className="grid2__foldname">{client}</span>,
@@ -142,7 +172,7 @@ function ProjectsGrid({ rows, store, empty }: { rows: CodeProject[]; store: stri
   }));
   return (
     <Grid
-      columns={PROJECT_COLS}
+      columns={columns}
       {...(rows.length > 0 ? { groups } : {})}
       rowKey={(p) => p.sessionId}
       store={store}
@@ -192,6 +222,20 @@ export function ZoneGrid({ domain, tab, blurb, b }: {
   b: Bundle;
 }): ReactNode {
   const store = `lifework.${domain}.${tab}.cols`;
+  // Status changes land here first, so a row changes tab the moment she
+  // picks — and snaps back if the database refuses the write.
+  const [staged, setStaged] = useState<Record<string, ProjectStage>>({});
+  const projects = b.codeProjects.map(
+    (p) => (staged[p.sessionId] ? { ...p, status: staged[p.sessionId] } : p));
+  async function moveStage(p: CodeProject, v: ProjectStage) {
+    const prev = p.status;
+    setStaged((m) => ({ ...m, [p.sessionId]: v }));
+    const db = getSupabase();
+    if (!db) return;
+    const { error } = await db.from('code_projects')
+      .update({ status: v }).eq('session_id', p.sessionId);
+    if (error) setStaged((m) => ({ ...m, [p.sessionId]: prev }));
+  }
   // The open work of this domain. Inlined rather than imported from the data
   // barrel: that module reads the disk, and this grid runs in the browser.
   const mine = b.tasks.filter((t) => t.status !== 'done' && t.domain === domain);
@@ -238,14 +282,17 @@ export function ZoneGrid({ domain, tab, blurb, b }: {
 
     // ---------------------------------------------------------------- apps
     case 'apps/building':
-      return <ProjectsGrid rows={b.codeProjects} store={store}
+      return <ProjectsGrid rows={projects.filter((p) => p.status === 'building')}
+        store={store} onStage={moveStage}
         empty="No projects loaded. They come from the code_projects table." />;
     case 'apps/live':
-      return <ProjectsGrid rows={b.codeProjects.filter((p) => p.liveUrl)} store={store}
-        empty="Nothing has a live address yet: Netlify, Vercel and Cloud Player have not been read." />;
-    case 'apps/incidents':
-      return pending(['What broke', 'App', 'Since', 'State'],
-        'Incidents are not tracked anywhere yet.', store);
+      return <ProjectsGrid rows={projects.filter((p) => p.status === 'live')}
+        store={store} onStage={moveStage}
+        empty="Nothing marked Live yet. Set a project's Status to Live and it moves here." />;
+    case 'apps/archived':
+      return <ProjectsGrid rows={projects.filter((p) => p.status === 'archived')}
+        store={store} onStage={moveStage}
+        empty="Nothing archived. Set a project's Status to Archived to tuck it away here." />;
     case 'apps/workers':
       return pending(['Worker', 'Building', 'Waiting on', 'Last seen'],
         'The workers are not reporting into this yet.', store);

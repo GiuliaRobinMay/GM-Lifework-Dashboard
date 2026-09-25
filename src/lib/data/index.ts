@@ -72,8 +72,24 @@ export const getGridColumns = () =>
 // The code projects behind Applications: one row per Claude Code
 // session, loaded from the session list. No seed; the local fixture serves
 // the same purpose it does for clients.
-export const getCodeProjects = () =>
-  readTable<CodeProject>('code_projects_api', localRows<CodeProject>('codeProjects') ?? []);
+//
+// The status (Building | Live | Archived) travels through its own view and is
+// merged here, so the original code_projects_api view never needed touching.
+// A row the status view does not know is Building — the state every project
+// starts in. A failed status read is surfaced, not swallowed: it means the
+// 0009 migration has not been run yet.
+export const getCodeProjects = async () => {
+  const base = await readTable<CodeProject>(
+    'code_projects_api', localRows<CodeProject>('codeProjects') ?? []);
+  const stage = await readTable<{ sessionId: string; status: CodeProject['status'] }>(
+    'code_projects_status_api', []);
+  const by = new Map(stage.rows.map((s) => [s.sessionId, s.status]));
+  return {
+    ...base,
+    error: base.error ?? (base.source === 'supabase' ? stage.error : null),
+    rows: base.rows.map((p) => ({ ...p, status: by.get(p.sessionId) ?? p.status ?? 'building' })),
+  };
+};
 
 export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
 export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);

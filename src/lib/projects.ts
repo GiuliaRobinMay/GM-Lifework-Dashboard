@@ -6,6 +6,15 @@
  * been read from the host. Everything here is what the session records say,
  * plus what she has told us about hosting.
  */
+/** Where a project stands, her call, set from the grid. */
+export type ProjectStage = 'building' | 'live' | 'archived';
+
+export const STAGES: { value: ProjectStage; label: string }[] = [
+  { value: 'building', label: 'Building' },
+  { value: 'live', label: 'Live' },
+  { value: 'archived', label: 'Archived' },
+];
+
 export type CodeProject = {
   sessionId: string;
   name: string;
@@ -24,6 +33,7 @@ export type CodeProject = {
   lastAction: string | null;
   updatedAt: string | null;
   sessionUrl: string;
+  status: ProjectStage;
 };
 
 /** The sidebar's order: her clients as she groups them there. */

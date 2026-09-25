@@ -135,7 +135,7 @@ export const DOMAINS: Domain[] = [
     tabs: [
       { slug: 'live', label: 'Live', blurb: 'What is deployed right now, and its health.' },
       { slug: 'building', label: 'Building', blurb: 'In flight — branches, worktrees and open gates.' },
-      { slug: 'incidents', label: 'Incidents', blurb: 'Things that broke, or are about to.' },
+      { slug: 'archived', label: 'Archived', blurb: 'Done with, kept for the record.' },
       { slug: 'workers', label: 'Workers', blurb: 'Who is building what, and what is waiting on you.' },
     ],
   },
