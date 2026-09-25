@@ -69,7 +69,7 @@ export const getCollectionOrder = () =>
 export const getGridColumns = () =>
   readTable<ColumnSetting>('grid_columns_api', []);
 
-// The code projects behind Vibe coding and apps: one row per Claude Code
+// The code projects behind Applications: one row per Claude Code
 // session, loaded from the session list. No seed; the local fixture serves
 // the same purpose it does for clients.
 export const getCodeProjects = () =>
