@@ -18,6 +18,7 @@ import type {
 import type { Company, Contact, ClientApp } from '@/lib/crm';
 import type { DomainOverride, CollectionOrder } from '@/lib/nav';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
+import type { ColumnSetting } from '@/lib/grid';
 import { localRows } from '@/lib/data/local';
 
 import { APPS } from '@/lib/seed/apps';
@@ -60,6 +61,12 @@ export const getDomainSettings = () =>
 
 export const getCollectionOrder = () =>
   readTable<CollectionOrder>('collection_settings_api', []);
+
+// Column renames and glyphs, for every grid at once. Empty until she has
+// changed one, and empty again if the table is not there yet — either way
+// the grid draws its columns as the code names them.
+export const getGridColumns = () =>
+  readTable<ColumnSetting>('grid_columns_api', []);
 
 export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
 export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);

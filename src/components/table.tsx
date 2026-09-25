@@ -22,10 +22,13 @@ export function useColumnWidths(store: string, defaults: number[]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store]);
 
-  function resize(i: number, w: number) {
+  // Takes the movement, not the new width: a drag fires many times before
+  // React re-renders, so a width computed outside setState is stale by the
+  // second event and only the last few pixels of the drag would stick.
+  function resize(i: number, dx: number) {
     setWidths((prev) => {
       const next = [...prev];
-      next[i] = Math.max(MIN_WIDTH, Math.round(w));
+      next[i] = Math.max(MIN_WIDTH, Math.round(prev[i] + dx));
       try { localStorage.setItem(store, JSON.stringify(next)); } catch { /* private mode */ }
       return next;
     });

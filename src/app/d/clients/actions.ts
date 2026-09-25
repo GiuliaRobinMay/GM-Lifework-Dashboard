@@ -28,6 +28,100 @@ export async function setStatus(id: string, status: ClientStatus): Promise<Resul
   return { error: null };
 }
 
+/**
+ * The fields the table edits in place, and the column each one is.
+ *
+ * An allowlist rather than a generic patch: what the table can write is the
+ * same short list it can show, and nothing arriving from the browser picks
+ * its own column.
+ */
+const COMPANY_FIELDS = {
+  name: 'name',
+  communityUrl: 'community_url',
+  notionUrl: 'notion_url',
+  upworkUrl: 'upwork_url',
+  website: 'website',
+} as const;
+
+export type CompanyField = keyof typeof COMPANY_FIELDS;
+
+/** A link typed without its scheme would not open; give it the one it means. */
+function asUrl(v: string): string | null {
+  const t = v.trim();
+  if (!t) return null;
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(t) ? t : `https://${t}`;
+}
+
+export async function updateCompanyField(id: string, field: CompanyField, value: string): Promise<Result> {
+  const column = COMPANY_FIELDS[field];
+  if (!column) return { error: `Unknown field: ${field}` };
+  const db = getSupabase();
+  if (!db) return { error: 'Supabase is not configured.' };
+
+  let next: string | null;
+  if (field === 'name') {
+    next = value.trim();
+    if (!next) return { error: 'A client needs a name.' };
+  } else {
+    next = asUrl(value);
+  }
+
+  const { error } = await db.from('client_companies').update({ [column]: next }).eq('id', id);
+  if (error) return { error: error.message };
+  touched();
+  return { error: null };
+}
+
+/**
+ * The main contact, typed as one name.
+ *
+ * Stored as first and last, split at the last space, so what she typed is
+ * what the table shows back: the two halves join with the same space.
+ * A client with no contact yet gets one, marked primary.
+ */
+export async function setPrimaryContactName(companyId: string, full: string): Promise<Result> {
+  const name = full.trim().replace(/\s+/g, ' ');
+  const db = getSupabase();
+  if (!db) return { error: 'Supabase is not configured.' };
+
+  const cut = name.lastIndexOf(' ');
+  const first = cut < 0 ? name : name.slice(0, cut);
+  const last = cut < 0 ? '' : name.slice(cut + 1);
+
+  const { data: existing, error: e0 } = await db
+    .from('client_contacts')
+    .select('id, is_primary')
+    .eq('company_id', companyId)
+    .order('is_primary', { ascending: false })
+    .limit(1);
+  if (e0) return { error: e0.message };
+  const current = existing?.[0] as { id: string } | undefined;
+
+  if (!name) {
+    return { error: current ? 'A contact needs a name. Remove them from the client page instead.' : null };
+  }
+
+  if (current) {
+    const { error } = await db
+      .from('client_contacts')
+      .update({ first_name: first, last_name: last, is_primary: true, needs_check: false })
+      .eq('id', current.id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await db.from('client_contacts').insert({
+      company_id: companyId,
+      first_name: first,
+      last_name: last,
+      is_primary: true,
+      source: 'direct',
+      needs_check: false,
+    });
+    if (error) return { error: error.message };
+  }
+  touched();
+  return { error: null };
+}
+
 export async function archiveClient(id: string): Promise<Result> {
   return setStatus(id, 'archived');
 }

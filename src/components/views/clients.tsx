@@ -9,6 +9,8 @@ import {
 import { Widget, Rows, Row, Empty, Badge, SourceNote } from '@/components/ui';
 import { Portal } from '@/components/views/shared';
 import { ClientTable } from '@/components/ClientTable';
+import { Peek } from '@/components/Peek';
+import { CLIENTS_GRID, columnsFor, type ViewOpts } from '@/lib/grid';
 
 /**
  * Clients.
@@ -17,20 +19,33 @@ import { ClientTable } from '@/components/ClientTable';
  * archived start folded so the three she works from are what she sees.
  * The name opens the detail page; the status cell moves the row.
  */
-export function clientsZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNode {
+export function clientsZone(domain: Domain, tab: Tab, b: Bundle, q = '', view: ViewOpts = {}): ReactNode {
   if (!b.crmConnected) return notConnected(domain, tab, b);
-  return listView(domain, tab, b, q);
+  return listView(domain, tab, b, q, view);
 }
 
 // ------------------------------------------------------------------- list
 
 // The top bar already says "Clients", so the page draws no heading of its own.
-function listView(_domain: Domain, _tab: Tab, b: Bundle, q: string): ReactNode {
+function listView(domain: Domain, _tab: Tab, b: Bundle, q: string, view: ViewOpts): ReactNode {
+  const peek = view.peek ? b.companies.find((c) => c.id === view.peek) ?? null : null;
+  const listHref = q ? `/d/clients/all?q=${encodeURIComponent(q)}` : '/d/clients/all';
   return (
     <Portal
       note={<SourceNote source={b.source} error={b.error} missingEnv={b.missingEnv} />}
     >
-      <ClientTable companies={b.companies} contacts={b.contacts} q={q} />
+      <ClientTable
+        companies={b.companies}
+        contacts={b.contacts}
+        q={q}
+        settings={columnsFor(view.columns ?? [], CLIENTS_GRID)}
+        accent={domain.accent}
+      />
+      {peek ? (
+        <Peek title={peek.name} closeHref={listHref} fullHref={`/d/clients/all/${peek.id}`}>
+          <CompanyCard c={peek} b={b} compact />
+        </Peek>
+      ) : null}
     </Portal>
   );
 }
@@ -38,15 +53,27 @@ function listView(_domain: Domain, _tab: Tab, b: Bundle, q: string): ReactNode {
 // ----------------------------------------------------------------- detail
 
 export function companyDetail(c: Company, b: Bundle): ReactNode {
+  return (
+    <main className="content content--wide stack">
+      <CompanyCard c={c} b={b} />
+    </main>
+  );
+}
+
+/**
+ * The client card: the same body on the full page and in the panel. Compact
+ * drops the back link, since the panel has its own way out.
+ */
+export function CompanyCard({ c, b, compact = false }: { c: Company; b: Bundle; compact?: boolean }) {
   const people = contactsFor(b.contacts, c.id);
   const apps = appsFor(b.clientApps, c.id);
   const links = companyLinks(c);
 
   return (
-    <main className="content content--wide stack">
+    <div className={compact ? 'stack card--peek' : 'stack'}>
       <div className="pagehead">
         <div className="pagehead__text">
-          <p><Link href="/d/clients/all" className="backlink">← All clients</Link></p>
+          {compact ? null : <p><Link href="/d/clients/all" className="backlink">← All clients</Link></p>}
           <h1 className="page-title">{c.name}</h1>
           <p className="muted" style={{ marginTop: 4 }}>
             {[c.legalName, platformOf(c), c.phase ? PHASE_LABEL[c.phase] : null]
@@ -127,7 +154,7 @@ export function companyDetail(c: Company, b: Bundle): ReactNode {
           {c.remarks ? <p className="muted" style={{ marginTop: 8, lineHeight: 1.65 }}>{c.remarks}</p> : null}
         </Widget>
       ) : null}
-    </main>
+    </div>
   );
 }
 

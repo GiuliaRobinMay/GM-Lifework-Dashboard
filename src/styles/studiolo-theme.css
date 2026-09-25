@@ -22,14 +22,14 @@
   --brand-violet: #543ff8;
   --brand-red: #ed1748;
   --brand-green: #20a375;
-  --brand-orange: #e47d17;
+  --brand-orange: #f6921f;
 
   /* Deepened twins, for the second stop of a gradient. Same hue, so depth
      never smuggles in a fifth colour. */
   --brand-violet-deep: #3b2ac9;
   --brand-red-deep: #bd0f36;
   --brand-green-deep: #17805b;
-  --brand-orange-deep: #b86111;
+  --brand-orange-deep: #de7a15;
 
   /* Surfaces */
   --canvas: #f6f7f9;   /* page behind the cards */

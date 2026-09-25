@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { DOMAIN_BY_SLUG, findTab, withOverride, overrideMap } from '@/lib/nav';
 import { renderZone } from '@/components/views';
 import { loadAll } from '@/lib/data/bundle';
-import { getDomainSettings } from '@/lib/data';
+import { getDomainSettings, getGridColumns } from '@/lib/data';
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string; tab?: string[] }> }) {
   const { domain: slug, tab } = await params;
@@ -27,24 +27,26 @@ export default async function DomainPage({
   params, searchParams,
 }: {
   params: Promise<{ domain: string; tab?: string[] }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; peek?: string }>;
 }) {
   const { domain: slug, tab } = await params;
-  const { q = '' } = await searchParams;
+  const { q = '', peek } = await searchParams;
   const base = DOMAIN_BY_SLUG.get(slug);
   if (!base) notFound();
 
   // An unknown tab falls back to the first one rather than 404ing — a stale
   // bookmark should land you somewhere useful, not on an error.
   const active = findTab(base, tab?.[0]);
-  const [bundle, { rows: settings }] = await Promise.all([loadAll(), getDomainSettings()]);
+  const [bundle, { rows: settings }, { rows: columns }] = await Promise.all([
+    loadAll(), getDomainSettings(), getGridColumns(),
+  ]);
   // A recolour has to reach the zone as well, or the widgets inside it would
   // keep the old accent while the chrome around them changed.
   const domain = withOverride(base, overrideMap(settings)[base.slug]);
 
   return (
     <>
-      {renderZone(domain, active, bundle, q)}
+      {renderZone(domain, active, bundle, q, { peek, columns })}
     </>
   );
 }

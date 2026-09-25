@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getSupabase } from '@/lib/supabase';
 import { ICON_CHOICES, ACCENT_CHOICES, GROUP_ORDER, resolveNav, overrideMap } from '@/lib/nav';
 import { getDomainSettings, getCollectionOrder } from '@/lib/data';
+import { FIELD_TYPES } from '@/lib/grid';
 
 /**
  * Rename or recolour a domain.
@@ -32,6 +33,33 @@ export async function saveDomainSettings(
 
   // The name and colour are in the rail and the chrome, which every page
   // draws, so the whole layout is revalidated rather than one route.
+  revalidatePath('/', 'layout');
+  return { error: null };
+}
+
+/**
+ * Rename a grid column or change its glyph.
+ *
+ * Keyed by the grid and the column, so the same column key in two grids can
+ * carry two names. The glyph must be one the grid knows how to draw.
+ */
+export async function saveGridColumn(
+  grid: string,
+  key: string,
+  input: { label: string; icon: string },
+): Promise<{ error: string | null }> {
+  const db = getSupabase();
+  if (!db) return { error: 'Supabase is not configured, so there is nowhere to save this.' };
+
+  const label = input.label.trim();
+  if (!label) return { error: 'A column needs a name.' };
+  if (!FIELD_TYPES.includes(input.icon as never)) return { error: 'That is not one of the icons.' };
+
+  const { error } = await db
+    .from('grid_columns')
+    .upsert({ grid, key, label, icon: input.icon, updated_at: new Date().toISOString() });
+  if (error) return { error: error.message };
+
   revalidatePath('/', 'layout');
   return { error: null };
 }

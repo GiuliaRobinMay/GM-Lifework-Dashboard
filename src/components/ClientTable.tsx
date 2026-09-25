@@ -2,35 +2,51 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Company, Contact, ClientStatus } from '@/lib/crm';
 import {
   STATUS_LABEL, STATUS_ORDER, STATUS_OPEN_BY_DEFAULT,
   fullName, primaryContact, contactsFor,
 } from '@/lib/crm';
-import { setStatus, archiveClient, deleteClient } from '@/app/d/clients/actions';
+import { CLIENTS_GRID, type ColumnSetting } from '@/lib/grid';
+import {
+  setStatus, archiveClient, deleteClient, updateCompanyField, setPrimaryContactName,
+} from '@/app/d/clients/actions';
+import { saveGridColumn } from '@/app/d/actions';
 import { Grid, type Column, type Group } from '@/components/Grid';
+import { EditableCell } from '@/components/EditableCell';
 
 /**
  * The client table.
  *
  * The same grid as everywhere else in the app — same rules, same row height,
  * same field glyphs in the header — grouped by status in Notion's order, each
- * group a fold with its count. DONE and ARCHIVE start folded.
+ * fold tinted with its status colour. DONE and ARCHIVE start folded.
  *
- * Writes from here: the status select moves a row; archive and delete are
- * the last two columns (delete asks first).
+ * Every field is typed into in place. The arrow before the name opens the
+ * client beside the table. Status sits last: the fold already says it.
+ * Archive and delete are the two buttons at the end (delete asks first).
  */
 
-const STORE = 'lifework.clients.cols';
-
 export function ClientTable({
-  companies, contacts, q = '',
+  companies, contacts, q = '', settings = {}, accent,
 }: {
   companies: Company[];
   contacts: Contact[];
   q?: string;
+  settings?: Record<string, ColumnSetting>;
+  accent?: string;
 }) {
   const [open, setOpen] = useState<Record<ClientStatus, boolean>>({ ...STATUS_OPEN_BY_DEFAULT });
+  const params = useSearchParams();
+
+  // The panel is a URL state, so the arrow is a plain link that keeps the
+  // search and adds the id.
+  const peekHref = (id: string) => {
+    const next = new URLSearchParams(params.toString());
+    next.set('peek', id);
+    return `?${next.toString()}`;
+  };
 
   const needle = q.trim().toLowerCase();
   const matches = (c: Company) => {
@@ -39,30 +55,45 @@ export function ClientTable({
     return contactsFor(contacts, c.id).some((p) => fullName(p).toLowerCase().includes(needle));
   };
 
+  const field = (key: 'communityUrl' | 'notionUrl' | 'upworkUrl', label: string) =>
+    (c: Company) => (
+      <EditableCell
+        kind="link"
+        value={c[key]}
+        label={`${label} of ${c.name}`}
+        onSave={(v) => updateCompanyField(c.id, key, v)}
+      />
+    );
+
   const columns: Column<Company>[] = [
     {
-      key: 'community', label: 'Community', type: 'text', width: 260,
-      render: (c) => <Link href={`/d/clients/all/${c.id}`} className="grid2__name">{c.name}</Link>,
+      key: 'community', label: 'Community', type: 'text', width: 280,
+      render: (c) => (
+        <span className="cell cell--lead">
+          <Link href={peekHref(c.id)} scroll={false} className="grid2__open" aria-label={`Open ${c.name}`} title="Open">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
+          </Link>
+          <EditableCell
+            kind="text"
+            value={c.name}
+            label={`Name of ${c.name}`}
+            onSave={(v) => updateCompanyField(c.id, 'name', v)}
+          />
+        </span>
+      ),
     },
     {
       key: 'client', label: 'Client', type: 'text', width: 210,
       render: (c) => <ClientCell company={c} contacts={contacts} />,
     },
+    { key: 'mighty', label: 'Mighty Networks', type: 'link', width: 200, render: field('communityUrl', 'Mighty Networks link') },
+    { key: 'notion', label: 'Notion', type: 'link', width: 200, render: field('notionUrl', 'Notion link') },
+    { key: 'upwork', label: 'Upwork', type: 'link', width: 170, render: field('upworkUrl', 'Upwork link') },
     {
       key: 'status', label: 'Status', type: 'select', width: 170,
       render: (c) => <StatusCell company={c} />,
-    },
-    {
-      key: 'mighty', label: 'Mighty Networks', type: 'link', width: 175,
-      render: (c) => (c.communityUrl
-        ? <a className="grid2__link" href={c.communityUrl} target="_blank" rel="noreferrer">Open ↗</a>
-        : <span className="grid2__dash">—</span>),
-    },
-    {
-      key: 'upwork', label: 'Upwork', type: 'link', width: 130,
-      render: (c) => (c.upworkUrl
-        ? <a className="grid2__link" href={c.upworkUrl} target="_blank" rel="noreferrer">Open ↗</a>
-        : <span className="grid2__dash">—</span>),
     },
     {
       key: 'archive', label: 'Archive', type: 'text', width: 60, bare: true,
@@ -78,6 +109,7 @@ export function ClientTable({
   // is not behind a fold and misses do not pad the page.
   const groups: Group<Company>[] = STATUS_ORDER.map((status) => ({
     key: status,
+    tone: status,
     head: <span className={`status status--${status}`}>{STATUS_LABEL[status]}</span>,
     rows: companies
       .filter((c) => c.status === status && matches(c))
@@ -92,8 +124,11 @@ export function ClientTable({
       columns={columns}
       {...(companies.length > 0 ? { groups } : {})}
       rowKey={(c) => c.id}
-      store={STORE}
+      store={CLIENTS_GRID}
       empty="No clients in the database yet."
+      settings={settings}
+      onColumnSettings={(key, input) => saveGridColumn(CLIENTS_GRID, key, input)}
+      accent={accent}
     />
   );
 }
@@ -104,10 +139,15 @@ function ClientCell({ company: c, contacts }: { company: Company; contacts: Cont
   const who = primaryContact(contacts, c.id);
   const others = contactsFor(contacts, c.id).length - 1;
   return (
-    <>
-      {who ? fullName(who) : <span className="grid2__dash">—</span>}
+    <span className="cell cell--lead">
+      <EditableCell
+        kind="text"
+        value={who ? fullName(who) : null}
+        label={`Main contact of ${c.name}`}
+        onSave={(v) => setPrimaryContactName(c.id, v)}
+      />
       {others > 0 ? <span className="grid2__more">+{others}</span> : null}
-    </>
+    </span>
   );
 }
 

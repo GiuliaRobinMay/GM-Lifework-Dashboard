@@ -4,6 +4,7 @@ import type { Bundle } from '@/lib/data/bundle';
 import { SourceNote } from '@/components/ui';
 import { Portal } from '@/components/views/shared';
 import { ZoneGrid } from '@/components/views/grids';
+import type { ViewOpts } from '@/lib/grid';
 
 import { clientsZone } from '@/components/views/clients';
 import { upworkZone } from '@/components/views/upwork';
@@ -15,9 +16,9 @@ import { upworkZone } from '@/components/views/upwork';
  * their own because they write back; everything else is columns over the
  * bundle, and a tab with no source yet still draws its columns.
  */
-export function renderZone(domain: Domain, tab: Tab, b: Bundle, q = ''): ReactNode {
+export function renderZone(domain: Domain, tab: Tab, b: Bundle, q = '', view: ViewOpts = {}): ReactNode {
   switch (domain.slug) {
-    case 'clients': return clientsZone(domain, tab, b, q);
+    case 'clients': return clientsZone(domain, tab, b, q, view);
     case 'upwork': return upworkZone(domain, tab, b, q);
     default: return gridZone(domain, tab, b);
   }
