@@ -1359,6 +1359,7 @@ button.row {
 .grid2__fold--contact td  { background: color-mix(in srgb, var(--brand-red) 9%, white); }
 .grid2__fold--sleeping td { background: color-mix(in srgb, var(--brand-violet) 9%, white); }
 .grid2__fold--done td     { background: color-mix(in srgb, var(--brand-orange) 13%, white); }
+.grid2__foldname { font-weight: 600; color: var(--ink); }
 .grid2__fold--archived td,
 .grid2__fold--grey td     { background: #e8ebf0; }
 

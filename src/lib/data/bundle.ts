@@ -2,7 +2,7 @@ import {
   getTasks, getApps, getBrainSources, getVoiceRules,
   getContent, getCourses, getGoals, getSignals,
   getCompanies, getContacts, getClientApps,
-  getUpworkLeads, getUpworkInvoices,
+  getUpworkLeads, getUpworkInvoices, getCodeProjects,
 } from '@/lib/data';
 import { missingSupabaseEnv } from '@/lib/supabase';
 import { readClientTasks } from '@/lib/notion';
@@ -12,6 +12,7 @@ import type {
 } from '@/lib/types';
 import type { Company, Contact, ClientApp } from '@/lib/crm';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
+import type { CodeProject } from '@/lib/projects';
 
 /**
  * Every domain page reads the same bundle.
@@ -50,6 +51,9 @@ export type Bundle = {
 
   /** Open client work, read live from Notion's Daily Tasks. Not stored. */
   clientTasks: Task[];
+
+  /** The code projects: one per Claude Code session. */
+  codeProjects: CodeProject[];
 };
 
 export async function loadAll(): Promise<Bundle> {
@@ -57,12 +61,12 @@ export async function loadAll(): Promise<Bundle> {
     tasks, apps, brainSources, voiceRules,
     content, courses, goals, signals,
     companies, contacts, clientApps, clientTasks,
-    upworkLeads, upworkInvoices,
+    upworkLeads, upworkInvoices, codeProjects,
   ] = await Promise.all([
     getTasks(), getApps(), getBrainSources(), getVoiceRules(),
     getContent(), getCourses(), getGoals(), getSignals(),
     getCompanies(), getContacts(), getClientApps(), readClientTasks(),
-    getUpworkLeads(), getUpworkInvoices(),
+    getUpworkLeads(), getUpworkInvoices(), getCodeProjects(),
   ]);
 
   // If any read fell back, say so once rather than ten times.
@@ -92,5 +96,6 @@ export async function loadAll(): Promise<Bundle> {
 
     upworkLeads: upworkLeads.rows,
     upworkInvoices: upworkInvoices.rows,
+    codeProjects: codeProjects.rows,
   };
 }

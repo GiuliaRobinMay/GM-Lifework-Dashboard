@@ -1,12 +1,13 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Bundle } from '@/lib/data/bundle';
+import { byClient, WORK_LABEL, type CodeProject } from '@/lib/projects';
 import type {
   Task, AppLink, BrainSource, VoiceRule, ContentItem, Course, GoalPeriod, Signal,
 } from '@/lib/types';
 import { ROOTS } from '@/lib/types';
-import { Grid, type Column } from '@/components/Grid';
+import { Grid, type Column, type Group } from '@/components/Grid';
 import { shortDate } from '@/lib/upwork';
 
 /**
@@ -106,6 +107,50 @@ const SIGNAL_COLS: Column<Signal>[] = [
   { key: 'kind', label: 'Kind', type: 'select', width: 140, render: (s) => s.kind },
 ];
 
+const PROJECT_COLS: Column<CodeProject>[] = [
+  { key: 'name', label: 'Project', type: 'text', width: 250, render: (p) => p.name },
+  { key: 'session', label: 'Session', type: 'link', width: 120,
+    render: (p) => link(p.sessionUrl, 'Open session ↗') },
+  { key: 'repo', label: 'GitHub', type: 'link', width: 260,
+    render: (p) => (p.repoUrl ? link(p.repoUrl, p.repo ?? p.repoUrl) : dash) },
+  { key: 'live', label: 'Live', type: 'link', width: 160, render: (p) => link(p.liveUrl) },
+  { key: 'host', label: 'Host', type: 'select', width: 110, render: (p) => text(p.host) },
+  { key: 'work', label: 'Status', type: 'select', width: 140,
+    render: (p) => chip(
+      p.sessionState === 'running' ? 'Running' : WORK_LABEL[p.workState ?? ''] ?? text(p.workState) as string,
+      p.sessionState === 'running' ? 'active' : p.workState === 'need_input' ? 'contact' : p.workState === 'completed' ? 'done' : 'sleeping',
+    ) },
+  { key: 'last', label: 'Last action', type: 'text', width: 340, render: (p) => text(p.lastAction) },
+  { key: 'branch', label: 'Branch', type: 'text', width: 220, render: (p) => text(p.branch) },
+  { key: 'framework', label: 'Framework', type: 'text', width: 190, render: (p) => text(p.framework) },
+  { key: 'database', label: 'Database', type: 'text', width: 130, render: (p) => text(p.database) },
+  { key: 'auth', label: 'Login', type: 'text', width: 120, render: (p) => text(p.auth) },
+  { key: 'services', label: 'Services', type: 'text', width: 200, render: (p) => text(p.services) },
+  { key: 'updated', label: 'Updated', type: 'date', width: 120, render: (p) => shortDate(p.updatedAt) },
+];
+
+/** The projects, folded by client the way her session list groups them. */
+function ProjectsGrid({ rows, store, empty }: { rows: CodeProject[]; store: string; empty: string }) {
+  const [closed, setClosed] = useState<Record<string, boolean>>({});
+  const groups: Group<CodeProject>[] = byClient(rows).map(([client, list]) => ({
+    key: client,
+    head: <span className="grid2__foldname">{client}</span>,
+    tone: 'grey',
+    rows: list,
+    open: !closed[client],
+    onToggle: () => setClosed((c) => ({ ...c, [client]: !c[client] })),
+  }));
+  return (
+    <Grid
+      columns={PROJECT_COLS}
+      {...(rows.length > 0 ? { groups } : {})}
+      rowKey={(p) => p.sessionId}
+      store={store}
+      empty={empty}
+    />
+  );
+}
+
 type RootsRow = (typeof ROOTS)[number];
 const ROOTS_COLS: Column<RootsRow>[] = [
   { key: 'letter', label: 'Letter', type: 'text', width: 100, render: (r) => r.letter },
@@ -192,11 +237,12 @@ export function ZoneGrid({ domain, tab, blurb, b }: {
         empty="Nothing is tied to a campaign." />;
 
     // ---------------------------------------------------------------- apps
-    case 'apps/live':
-      return <Grid rows={b.apps} columns={APP_COLS} rowKey={(a) => a.id} store={store}
-        empty="Nothing recorded." />;
     case 'apps/building':
-      return work('Nothing in flight.');
+      return <ProjectsGrid rows={b.codeProjects} store={store}
+        empty="No projects loaded. They come from the code_projects table." />;
+    case 'apps/live':
+      return <ProjectsGrid rows={b.codeProjects.filter((p) => p.liveUrl)} store={store}
+        empty="Nothing has a live address yet: Netlify, Vercel and Cloud Player have not been read." />;
     case 'apps/incidents':
       return pending(['What broke', 'App', 'Since', 'State'],
         'Incidents are not tracked anywhere yet.', store);

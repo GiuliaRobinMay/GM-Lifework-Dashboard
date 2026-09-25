@@ -19,6 +19,7 @@ import type { Company, Contact, ClientApp } from '@/lib/crm';
 import type { DomainOverride, CollectionOrder } from '@/lib/nav';
 import type { UpworkLead, UpworkInvoice } from '@/lib/upwork';
 import type { ColumnSetting } from '@/lib/grid';
+import type { CodeProject } from '@/lib/projects';
 import { localRows } from '@/lib/data/local';
 
 import { APPS } from '@/lib/seed/apps';
@@ -67,6 +68,12 @@ export const getCollectionOrder = () =>
 // the grid draws its columns as the code names them.
 export const getGridColumns = () =>
   readTable<ColumnSetting>('grid_columns_api', []);
+
+// The code projects behind Vibe coding and apps: one row per Claude Code
+// session, loaded from the session list. No seed; the local fixture serves
+// the same purpose it does for clients.
+export const getCodeProjects = () =>
+  readTable<CodeProject>('code_projects_api', localRows<CodeProject>('codeProjects') ?? []);
 
 export const getUpworkLeads = () => readTable<UpworkLead>('upwork_leads_api', []);
 export const getUpworkInvoices = () => readTable<UpworkInvoice>('upwork_invoices_api', []);

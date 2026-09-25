@@ -127,7 +127,7 @@ export const DOMAINS: Domain[] = [
   },
   {
     slug: 'apps',
-    label: 'Apps & Deployments',
+    label: 'Vibe coding and apps',
     group: 'Work',
     icon: 'rocket',
     accent: 'red',

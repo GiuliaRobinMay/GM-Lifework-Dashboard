@@ -15,6 +15,7 @@ export type LocalFixture = {
   companies?: unknown[];
   contacts?: unknown[];
   clientApps?: unknown[];
+  codeProjects?: unknown[];
 };
 
 let cached: LocalFixture | null | undefined;
