@@ -1308,7 +1308,7 @@ button.row {
 }
 .grid2__table th:first-child { padding-left: 44px; }
 
-.grid2__table tbody tr:hover td { background: #f8f9fb; }
+.grid2__table tbody tr:not(.grid2__fold):hover td { background: #f8f9fb; }
 
 .grid2__num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid2__empty { color: var(--muted); font-style: italic; }
@@ -1443,7 +1443,17 @@ button.row {
   outline: 0;
 }
 .cell--pending { opacity: .55; }
-.cell__error { flex: none; font-size: 12px; color: var(--brand-red); }
+/* The error takes what room is left, never the value's: basis 0, so it
+   shrinks first and ellipsises, and the full text is on its title. */
+.cell__error {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--brand-red);
+}
 
 /* The zone's own button takes the zone's colour, not the app violet. */
 .chrome .btn--primary { background: var(--accent, var(--brand-violet)); }

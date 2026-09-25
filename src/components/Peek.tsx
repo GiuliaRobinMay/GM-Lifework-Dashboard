@@ -22,8 +22,17 @@ export function Peek({
 }) {
   const router = useRouter();
 
+  // Escape closes the panel only when nothing nearer is using it: a cell
+  // being edited, a dialog, the search box. Those get the key; the panel
+  // stays where she opened it.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') router.push(closeHref, { scroll: false }); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const t = e.target as Element | null;
+      if (t?.closest('input, textarea, select, dialog')) return;
+      if (document.querySelector('dialog[open]')) return;
+      router.push(closeHref, { scroll: false });
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [closeHref, router]);
